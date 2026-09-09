@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
 
-const RAW_VERSION = import.meta.env.VITE_APP_VERSION
-const VERSION = RAW_VERSION ? RAW_VERSION.slice(0, 7) : 'dev'
-
 function VersionBadge() {
   const [checking, setChecking] = useState(false)
 
@@ -18,7 +15,7 @@ function VersionBadge() {
 
   return (
     <button type="button" className="version-badge" {...longPressHandlers}>
-      v{VERSION}
+      v{__APP_VERSION__}
       {checking ? ' · buscando actualización…' : ''}
     </button>
   )
