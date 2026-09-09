@@ -1,11 +1,23 @@
+:root {
+  --gold: #b8912f;
+  --gold-dark: #8f6f22;
+  --gold-light: #e8d9ab;
+  --cream: #fbf8f0;
+  --white: #ffffff;
+  --text: #3a3226;
+  --text-muted: rgba(58, 50, 38, 0.6);
+  --rsvp-yes: #6b8f5c;
+  --rsvp-no: #a8583f;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #fdf2f8, #fce7f3, #fbcfe8);
+  background: var(--cream);
   font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #5b2333;
+  color: var(--text);
   padding-bottom: 2rem;
 }
 
@@ -19,6 +31,7 @@
   margin-bottom: 0.25rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  color: var(--gold-dark);
 }
 
 .countdown-subtitle {
@@ -39,17 +52,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: white;
+  background: var(--white);
+  border: 1px solid var(--gold-light);
   border-radius: 16px;
   padding: 1.5rem 1.25rem;
   min-width: 90px;
-  box-shadow: 0 8px 24px rgba(219, 39, 119, 0.15);
+  box-shadow: 0 8px 24px rgba(184, 145, 47, 0.12);
 }
 
 .countdown-number {
   font-size: 2.75rem;
   font-weight: 700;
-  color: #db2777;
+  color: var(--gold);
   line-height: 1;
 }
 
@@ -79,16 +93,18 @@
 
 .guests {
   width: min(480px, 90vw);
-  background: white;
+  background: var(--white);
+  border: 1px solid var(--gold-light);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(219, 39, 119, 0.15);
+  box-shadow: 0 8px 24px rgba(184, 145, 47, 0.12);
 }
 
 .guests h2 {
   margin: 0 0 1rem;
   font-size: 1.4rem;
   text-align: center;
+  color: var(--gold-dark);
 }
 
 .guests-form {
@@ -108,14 +124,16 @@
 .guests-form input,
 .guests-form select {
   padding: 0.5rem;
-  border: 1px solid #f0c6d8;
+  border: 1px solid var(--gold-light);
   border-radius: 8px;
   font-size: 0.95rem;
+  background: var(--cream);
+  color: var(--text);
 }
 
 .guests-form button {
-  background: #db2777;
-  color: white;
+  background: var(--gold);
+  color: var(--white);
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
@@ -124,11 +142,11 @@
 }
 
 .guests-form button:hover {
-  background: #be185d;
+  background: var(--gold-dark);
 }
 
 .guests-error {
-  color: #b91c1c;
+  color: var(--rsvp-no);
   font-size: 0.9rem;
   text-align: center;
 }
@@ -162,19 +180,19 @@
   min-height: 3rem;
   padding: 0.6rem 0.75rem;
   border-radius: 10px;
-  background: #fdf2f8;
-  border-left: 4px solid #f0c6d8;
+  background: var(--cream);
+  border-left: 4px solid var(--gold-light);
   overflow: hidden;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
 .guest-item.rsvp-yes {
-  border-left-color: #22c55e;
+  border-left-color: var(--rsvp-yes);
 }
 
 .guest-item.rsvp-no {
-  border-left-color: #ef4444;
+  border-left-color: var(--rsvp-no);
 }
 
 .guest-info {
@@ -212,40 +230,40 @@
   padding: 0.6rem 0;
   font-size: 0.9rem;
   font-weight: 600;
-  color: white;
+  color: var(--white);
   cursor: pointer;
 }
 
 .guest-action-btn.edit {
-  background: #db2777;
+  background: var(--gold);
 }
 
 .guest-action-btn.edit:hover {
-  background: #be185d;
+  background: var(--gold-dark);
 }
 
 .guest-action-btn.delete {
-  background: #ef4444;
+  background: var(--rsvp-no);
 }
 
 .guest-action-btn.delete:hover {
-  background: #dc2626;
+  background: #8a4630;
 }
 
 .guest-action-btn.save {
-  background: #22c55e;
+  background: var(--rsvp-yes);
 }
 
 .guest-action-btn.save:hover {
-  background: #16a34a;
+  background: #56744a;
 }
 
 .guest-action-btn.cancel {
-  background: #9ca3af;
+  background: #a89e88;
 }
 
 .guest-action-btn.cancel:hover {
-  background: #6b7280;
+  background: #8c8270;
 }
 
 .guest-edit-form {
@@ -258,9 +276,11 @@
 .guest-edit-form input,
 .guest-edit-form select {
   padding: 0.45rem 0.5rem;
-  border: 1px solid #f0c6d8;
+  border: 1px solid var(--gold-light);
   border-radius: 8px;
   font-size: 0.9rem;
+  background: var(--white);
+  color: var(--text);
 }
 
 .guest-edit-row {
