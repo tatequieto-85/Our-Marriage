@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import GuestItem from './GuestItem'
+import { API_BASE } from './api'
 
-const API_URL = 'https://nuestra-boda-api.byco85.workers.dev/api/guests'
+const API_URL = `${API_BASE}/api/guests`
 
 function Guests() {
   const [guests, setGuests] = useState([])

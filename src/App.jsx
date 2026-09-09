@@ -22,7 +22,7 @@ function App() {
   return (
     <div className="app">
       <VersionBadge />
-      <Countdown />
+      <Countdown compact={view !== 'home'} />
 
       {view === 'home' ? (
         <HomeMenu onSelect={setView} />

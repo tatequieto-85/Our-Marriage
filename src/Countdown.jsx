@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useLongPress } from './hooks/useLongPress'
+import WeddingDateModal from './WeddingDateModal'
+import { API_BASE } from './api'
 
-// Cambia esta fecha por la fecha real de la boda
-const WEDDING_DATE = new Date('2026-12-12T17:00:00')
+const SETTINGS_URL = `${API_BASE}/api/settings/wedding-date`
 
-function getTimeLeft() {
-  const diff = WEDDING_DATE.getTime() - Date.now()
+// Se usa mientras carga o si aún no se ha configurado ninguna fecha en el servidor.
+const DEFAULT_DATE = new Date('2026-12-12T17:00:00')
+
+function getTimeLeft(target) {
+  const diff = target.getTime() - Date.now()
   if (diff <= 0) {
     return { days: 0, hours: 0, minutes: 0, seconds: 0, done: true }
   }
@@ -15,13 +20,65 @@ function getTimeLeft() {
   return { days, hours, minutes, seconds, done: false }
 }
 
-function Countdown() {
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft)
+function Countdown({ compact = false }) {
+  const [weddingDate, setWeddingDate] = useState(DEFAULT_DATE)
+  const [, forceTick] = useState(0)
+  const [showModal, setShowModal] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
 
   useEffect(() => {
-    const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000)
+    let cancelled = false
+    async function loadDate() {
+      try {
+        const res = await fetch(SETTINGS_URL)
+        if (res.ok) {
+          const { value } = await res.json()
+          const date = new Date(value)
+          if (!cancelled && !Number.isNaN(date.getTime())) {
+            setWeddingDate(date)
+          }
+        }
+      } catch {
+        // Se mantiene la fecha por defecto si no se pudo cargar.
+      }
+    }
+    loadDate()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => forceTick((t) => t + 1), 1000)
     return () => clearInterval(timer)
   }, [])
+
+  const timeLeft = getTimeLeft(weddingDate)
+
+  const longPressHandlers = useLongPress(() => {
+    setSaveError(null)
+    setShowModal(true)
+  })
+
+  async function handleSaveDate(date) {
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const res = await fetch(SETTINGS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: date.toISOString() }),
+      })
+      if (!res.ok) throw new Error('No se pudo guardar')
+      setWeddingDate(date)
+      setShowModal(false)
+    } catch {
+      setSaveError('No se pudo guardar la fecha. Intenta de nuevo.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (timeLeft.done) {
     return (
@@ -32,27 +89,39 @@ function Countdown() {
   }
 
   return (
-    <div className="countdown">
-      <p className="countdown-subtitle">Cuenta regresiva</p>
-      <div className="countdown-grid">
-        <div className="countdown-item">
-          <span className="countdown-number">{timeLeft.days}</span>
-          <span className="countdown-label">Días</span>
-        </div>
-        <div className="countdown-item">
-          <span className="countdown-number">{timeLeft.hours}</span>
-          <span className="countdown-label">Horas</span>
-        </div>
-        <div className="countdown-item">
-          <span className="countdown-number">{timeLeft.minutes}</span>
-          <span className="countdown-label">Minutos</span>
-        </div>
-        <div className="countdown-item">
-          <span className="countdown-number">{timeLeft.seconds}</span>
-          <span className="countdown-label">Segundos</span>
+    <>
+      <div className={`countdown${compact ? ' compact' : ''}`}>
+        {!compact && <p className="countdown-subtitle">Cuenta regresiva</p>}
+        <div className="countdown-grid" {...longPressHandlers}>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.days}</span>
+            <span className="countdown-label">{compact ? 'D' : 'Días'}</span>
+          </div>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.hours}</span>
+            <span className="countdown-label">{compact ? 'H' : 'Horas'}</span>
+          </div>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.minutes}</span>
+            <span className="countdown-label">{compact ? 'M' : 'Minutos'}</span>
+          </div>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.seconds}</span>
+            <span className="countdown-label">{compact ? 'S' : 'Segundos'}</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showModal && (
+        <WeddingDateModal
+          initialDate={weddingDate}
+          onSave={handleSaveDate}
+          onCancel={() => setShowModal(false)}
+          saving={saving}
+          error={saveError}
+        />
+      )}
+    </>
   )
 }
 

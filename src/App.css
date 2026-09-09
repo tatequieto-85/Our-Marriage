@@ -18,15 +18,17 @@
   background: var(--cream);
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
-  padding: 0.5rem 1rem calc(2rem + env(safe-area-inset-bottom));
+  padding: 0.5rem 0 calc(2rem + env(safe-area-inset-bottom));
   padding-top: calc(0.5rem + env(safe-area-inset-top));
   box-sizing: border-box;
 }
 
 .version-badge {
+  align-self: flex-start;
   background: none;
   border: none;
   padding: 0.15rem 0.5rem;
+  margin-left: 0.5rem;
   font-size: 0.65rem;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -36,11 +38,22 @@
 }
 
 .countdown {
+  align-self: flex-start;
   width: 100%;
   max-width: 480px;
   box-sizing: border-box;
   text-align: center;
-  padding: 0.5rem 0 2rem;
+  padding: 0.5rem 1rem 2rem;
+  transition:
+    width 0.45s ease,
+    max-width 0.45s ease,
+    padding 0.45s ease;
+}
+
+.countdown.compact {
+  width: 33%;
+  max-width: 9.5rem;
+  padding: 0.35rem 0.75rem 0.5rem 1rem;
 }
 
 .countdown h1 {
@@ -64,6 +77,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.6rem;
   width: 100%;
+  transition: gap 0.45s ease;
 }
 
 .countdown-item {
@@ -77,6 +91,7 @@
   padding: 1rem 0.25rem;
   box-sizing: border-box;
   box-shadow: 0 8px 24px rgba(212, 175, 55, 0.16);
+  transition: padding 0.45s ease, border-radius 0.45s ease;
 }
 
 .countdown-number {
@@ -84,6 +99,7 @@
   font-weight: 700;
   color: var(--gold);
   line-height: 1;
+  transition: font-size 0.45s ease;
 }
 
 .countdown-label {
@@ -92,6 +108,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.6;
+  transition: font-size 0.45s ease;
 }
 
 @media (max-width: 380px) {
@@ -107,18 +124,32 @@
   }
 }
 
+.countdown.compact .countdown-grid {
+  gap: 0.25rem;
+}
+
+.countdown.compact .countdown-item {
+  padding: 0.35rem 0.1rem;
+  border-radius: 8px;
+}
+
+.countdown.compact .countdown-number {
+  font-size: 0.8rem;
+}
+
+.countdown.compact .countdown-label {
+  margin-top: 0.1rem;
+  font-size: 0.45rem;
+}
+
 .home-menu {
   width: 100%;
-  max-width: 480px;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.5rem 0.75rem;
   background: var(--white);
-  border: 1px solid var(--gold-light);
-  border-radius: 16px;
   padding: 1.75rem 1rem;
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.16);
 }
 
 .menu-item {
@@ -204,6 +235,50 @@
   text-align: center;
   opacity: 0.6;
   padding: 1.5rem 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 50, 38, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;
+  background: var(--white);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  text-align: center;
+  color: var(--gold-dark);
+}
+
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modal-card input[type='datetime-local'] {
+  padding: 0.6rem;
+  border: 1px solid var(--gold-light);
+  border-radius: 8px;
+  font-size: 1rem;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+  color: var(--text);
 }
 
 .guests-form {
