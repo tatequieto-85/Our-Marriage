@@ -78,8 +78,6 @@ function Guests() {
 
   return (
     <>
-      <p className="guests-hint">Mantén presionado un invitado para editarlo o borrarlo.</p>
-
       {error && <p className="guests-error">{error}</p>}
 
       {loading ? (

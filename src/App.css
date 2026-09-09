@@ -310,13 +310,6 @@
   gap: 0.5rem;
 }
 
-.guests-hint {
-  text-align: center;
-  font-size: 0.8rem;
-  opacity: 0.55;
-  margin: 0 0 0.75rem;
-}
-
 .fab-button {
   position: fixed;
   left: 50%;
