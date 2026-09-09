@@ -1,7 +1,7 @@
 :root {
-  --gold: #b8912f;
-  --gold-dark: #8f6f22;
-  --gold-light: #e8d9ab;
+  --gold: #d4af37;
+  --gold-dark: #aa7e14;
+  --gold-light: #f3e3ab;
   --cream: #fbf8f0;
   --white: #ffffff;
   --text: #3a3226;
@@ -57,7 +57,7 @@
   border-radius: 16px;
   padding: 1.5rem 1.25rem;
   min-width: 90px;
-  box-shadow: 0 8px 24px rgba(184, 145, 47, 0.12);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.16);
 }
 
 .countdown-number {
@@ -97,7 +97,7 @@
   border: 1px solid var(--gold-light);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 8px 24px rgba(184, 145, 47, 0.12);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.16);
 }
 
 .guests h2 {
