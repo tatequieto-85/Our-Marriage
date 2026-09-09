@@ -4,6 +4,7 @@ import HomeMenu from './HomeMenu'
 import Section from './Section'
 import Guests from './Guests'
 import ComingSoon from './ComingSoon'
+import VersionBadge from './VersionBadge'
 import './App.css'
 
 const SECTION_TITLES = {
@@ -20,6 +21,7 @@ function App() {
 
   return (
     <div className="app">
+      <VersionBadge />
       <Countdown />
 
       {view === 'home' ? (

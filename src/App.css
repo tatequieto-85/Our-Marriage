@@ -18,9 +18,21 @@
   background: var(--cream);
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
-  padding: 0 1rem calc(2rem + env(safe-area-inset-bottom));
-  padding-top: env(safe-area-inset-top);
+  padding: 0.5rem 1rem calc(2rem + env(safe-area-inset-bottom));
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
   box-sizing: border-box;
+}
+
+.version-badge {
+  background: none;
+  border: none;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .countdown {
@@ -28,7 +40,7 @@
   max-width: 480px;
   box-sizing: border-box;
   text-align: center;
-  padding: 1.5rem 0;
+  padding: 0.5rem 0 2rem;
 }
 
 .countdown h1 {
@@ -98,10 +110,15 @@
 .home-menu {
   width: 100%;
   max-width: 480px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem 0.75rem;
-  padding-top: 0.5rem;
+  gap: 1.5rem 0.75rem;
+  background: var(--white);
+  border: 1px solid var(--gold-light);
+  border-radius: 16px;
+  padding: 1.75rem 1rem;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.16);
 }
 
 .menu-item {
