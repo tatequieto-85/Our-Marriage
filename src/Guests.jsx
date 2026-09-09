@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import GuestItem from './GuestItem'
+import AddGuestModal from './AddGuestModal'
 import { API_BASE } from './api'
 
 const API_URL = `${API_BASE}/api/guests`
@@ -8,8 +9,9 @@ function Guests() {
   const [guests, setGuests] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [name, setName] = useState('')
-  const [guestsCount, setGuestsCount] = useState(1)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState(null)
 
   useEffect(() => {
     loadGuests()
@@ -29,22 +31,23 @@ function Guests() {
     }
   }
 
-  async function addGuest(e) {
-    e.preventDefault()
-    if (!name.trim()) return
+  async function addGuest({ name, guests_count }) {
+    setAdding(true)
+    setAddError(null)
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), guests_count: Number(guestsCount) || 1 }),
+        body: JSON.stringify({ name, guests_count }),
       })
       if (!res.ok) throw new Error('No se pudo agregar')
       const guest = await res.json()
       setGuests((prev) => [guest, ...prev])
-      setName('')
-      setGuestsCount(1)
+      setShowAddModal(false)
     } catch {
-      setError('No se pudo agregar el invitado.')
+      setAddError('No se pudo agregar el invitado. Intenta de nuevo.')
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -75,24 +78,6 @@ function Guests() {
 
   return (
     <>
-      <form className="guests-form" onSubmit={addGuest}>
-        <input
-          type="text"
-          placeholder="Nombre del invitado"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="number"
-          min="1"
-          value={guestsCount}
-          onChange={(e) => setGuestsCount(e.target.value)}
-          title="Número de personas"
-        />
-        <button type="submit">Agregar</button>
-      </form>
-
       <p className="guests-hint">Mantén presionado un invitado para editarlo o borrarlo.</p>
 
       {error && <p className="guests-error">{error}</p>}
@@ -107,6 +92,19 @@ function Guests() {
             <GuestItem key={guest.id} guest={guest} onSave={saveGuest} onDelete={removeGuest} />
           ))}
         </ul>
+      )}
+
+      <button type="button" className="fab-button" onClick={() => setShowAddModal(true)}>
+        + Agregar invitado
+      </button>
+
+      {showAddModal && (
+        <AddGuestModal
+          onSave={addGuest}
+          onCancel={() => setShowAddModal(false)}
+          saving={adding}
+          error={addError}
+        />
       )}
     </>
   )
