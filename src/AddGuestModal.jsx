@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { RSVP_LABELS } from './rsvp'
 
 function AddGuestModal({ onSave, onCancel, saving, error }) {
   const [name, setName] = useState('')
-  const [guestsCount, setGuestsCount] = useState(1)
+  const [rsvp, setRsvp] = useState('pending')
 
   function handleSubmit(event) {
     event.preventDefault()
     if (!name.trim()) return
-    onSave({ name: name.trim(), guests_count: Number(guestsCount) || 1 })
+    onSave({ name: name.trim(), rsvp })
   }
 
   return (
@@ -23,13 +24,13 @@ function AddGuestModal({ onSave, onCancel, saving, error }) {
             required
             autoFocus
           />
-          <input
-            type="number"
-            min="1"
-            value={guestsCount}
-            onChange={(e) => setGuestsCount(e.target.value)}
-            title="Número de personas"
-          />
+          <select value={rsvp} onChange={(e) => setRsvp(e.target.value)}>
+            {Object.entries(RSVP_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
           {error && <p className="guests-error">{error}</p>}
           <div className="guest-edit-actions">
             <button type="submit" className="guest-action-btn save" disabled={saving}>

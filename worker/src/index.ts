@@ -54,7 +54,7 @@ export default {
 
     if (url.pathname === '/api/guests' && request.method === 'GET') {
       const { results } = await env.DB.prepare(
-        'SELECT id, name, rsvp, guests_count, notes, created_at FROM guests ORDER BY created_at DESC'
+        'SELECT id, name, rsvp, guests_count, notes, created_at FROM guests ORDER BY created_at ASC, id ASC'
       ).all();
       return json(results, origin);
     }

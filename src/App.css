@@ -277,7 +277,8 @@
 
 .modal-card input[type='datetime-local'],
 .modal-card input[type='text'],
-.modal-card input[type='number'] {
+.modal-card input[type='number'],
+.modal-card select {
   padding: 0.6rem;
   border: 1px solid var(--gold-light);
   border-radius: 8px;

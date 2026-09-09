@@ -31,18 +31,18 @@ function Guests() {
     }
   }
 
-  async function addGuest({ name, guests_count }) {
+  async function addGuest({ name, rsvp }) {
     setAdding(true)
     setAddError(null)
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, guests_count }),
+        body: JSON.stringify({ name, rsvp }),
       })
       if (!res.ok) throw new Error('No se pudo agregar')
       const guest = await res.json()
-      setGuests((prev) => [guest, ...prev])
+      setGuests((prev) => [...prev, guest])
       setShowAddModal(false)
     } catch {
       setAddError('No se pudo agregar el invitado. Intenta de nuevo.')

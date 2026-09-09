@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
-
-const RSVP_LABELS = {
-  pending: 'Pendiente',
-  yes: 'Asiste',
-  no: 'No asiste',
-}
+import { RSVP_LABELS } from './rsvp'
 
 function toForm(guest) {
   return {
