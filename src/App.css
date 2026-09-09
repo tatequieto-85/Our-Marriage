@@ -1,0 +1,77 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3, #fbcfe8);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #5b2333;
+}
+
+.countdown {
+  text-align: center;
+  padding: 2rem;
+}
+
+.countdown h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.countdown-subtitle {
+  margin: 0 0 2rem;
+  font-size: 1.1rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.countdown-grid {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  min-width: 90px;
+  box-shadow: 0 8px 24px rgba(219, 39, 119, 0.15);
+}
+
+.countdown-number {
+  font-size: 2.75rem;
+  font-weight: 700;
+  color: #db2777;
+  line-height: 1;
+}
+
+.countdown-label {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .countdown h1 {
+    font-size: 1.8rem;
+  }
+  .countdown-grid {
+    gap: 0.75rem;
+  }
+  .countdown-item {
+    min-width: 70px;
+    padding: 1rem 0.75rem;
+  }
+  .countdown-number {
+    font-size: 2rem;
+  }
+}
