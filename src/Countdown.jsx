@@ -33,7 +33,6 @@ function Countdown() {
 
   return (
     <div className="countdown">
-      <h1>Nuestra Boda</h1>
       <p className="countdown-subtitle">Cuenta regresiva</p>
       <div className="countdown-grid">
         <div className="countdown-item">
