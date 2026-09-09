@@ -7,7 +7,7 @@ function corsHeaders(origin: string | null): HeadersInit {
   const allowOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : '';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }

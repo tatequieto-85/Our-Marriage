@@ -21,8 +21,10 @@ function App() {
 
   return (
     <div className="app">
-      <VersionBadge />
-      <Countdown compact={view !== 'home'} />
+      <div className={`top-bar${view === 'home' ? ' home-size' : ' compact-size'}`}>
+        <VersionBadge />
+        <Countdown compact={view !== 'home'} />
+      </div>
 
       {view === 'home' ? (
         <HomeMenu onSelect={setView} />

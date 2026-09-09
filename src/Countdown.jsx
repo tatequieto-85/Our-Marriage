@@ -82,34 +82,41 @@ function Countdown({ compact = false }) {
 
   if (timeLeft.done) {
     return (
-      <div className="countdown">
+      <div className={`countdown${compact ? ' compact' : ''}`} {...longPressHandlers}>
         <h1>¡Ya nos casamos! 💍</h1>
       </div>
     )
   }
 
+  const pad = (n) => String(n).padStart(2, '0')
+
   return (
     <>
-      <div className={`countdown${compact ? ' compact' : ''}`}>
-        {!compact && <p className="countdown-subtitle">Cuenta regresiva</p>}
-        <div className="countdown-grid" {...longPressHandlers}>
-          <div className="countdown-item">
-            <span className="countdown-number">{timeLeft.days}</span>
-            <span className="countdown-label">{compact ? 'D' : 'Días'}</span>
+      <div className={`countdown${compact ? ' compact' : ''}`} {...longPressHandlers}>
+        {compact ? (
+          <span className="countdown-compact-text">
+            {pad(timeLeft.days)}:{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+          </span>
+        ) : (
+          <div className="countdown-grid">
+            <div className="countdown-item">
+              <span className="countdown-number">{timeLeft.days}</span>
+              <span className="countdown-label">Días</span>
+            </div>
+            <div className="countdown-item">
+              <span className="countdown-number">{timeLeft.hours}</span>
+              <span className="countdown-label">Horas</span>
+            </div>
+            <div className="countdown-item">
+              <span className="countdown-number">{timeLeft.minutes}</span>
+              <span className="countdown-label">Minutos</span>
+            </div>
+            <div className="countdown-item">
+              <span className="countdown-number">{timeLeft.seconds}</span>
+              <span className="countdown-label">Segundos</span>
+            </div>
           </div>
-          <div className="countdown-item">
-            <span className="countdown-number">{timeLeft.hours}</span>
-            <span className="countdown-label">{compact ? 'H' : 'Horas'}</span>
-          </div>
-          <div className="countdown-item">
-            <span className="countdown-number">{timeLeft.minutes}</span>
-            <span className="countdown-label">{compact ? 'M' : 'Minutos'}</span>
-          </div>
-          <div className="countdown-item">
-            <span className="countdown-number">{timeLeft.seconds}</span>
-            <span className="countdown-label">{compact ? 'S' : 'Segundos'}</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {showModal && (
