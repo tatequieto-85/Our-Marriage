@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nuestra-boda-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-09",
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nuestra-boda-db",
+      "database_id": "545d3203-9328-4817-80e7-4259cdf723af",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
