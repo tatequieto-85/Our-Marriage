@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
+import GuestItem from './GuestItem'
 
 const API_URL = 'https://nuestra-boda-api.byco85.workers.dev/api/guests'
-
-const RSVP_LABELS = {
-  pending: 'Pendiente',
-  yes: 'Asiste',
-  no: 'No asiste',
-}
 
 function Guests() {
   const [guests, setGuests] = useState([])
@@ -52,18 +47,18 @@ function Guests() {
     }
   }
 
-  async function updateRsvp(guest, rsvp) {
+  async function saveGuest(id, updates) {
     try {
-      const res = await fetch(`${API_URL}/${guest.id}`, {
+      const res = await fetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...guest, rsvp }),
+        body: JSON.stringify(updates),
       })
       if (!res.ok) throw new Error('No se pudo actualizar')
       const updated = await res.json()
       setGuests((prev) => prev.map((g) => (g.id === updated.id ? updated : g)))
     } catch {
-      setError('No se pudo actualizar el RSVP.')
+      setError('No se pudo actualizar el invitado.')
     }
   }
 
@@ -99,6 +94,8 @@ function Guests() {
         <button type="submit">Agregar</button>
       </form>
 
+      <p className="guests-hint">Mantén presionado un invitado para editarlo o borrarlo.</p>
+
       {error && <p className="guests-error">{error}</p>}
 
       {loading ? (
@@ -108,34 +105,7 @@ function Guests() {
       ) : (
         <ul className="guests-list">
           {guests.map((guest) => (
-            <li key={guest.id} className={`guest-item rsvp-${guest.rsvp}`}>
-              <div className="guest-info">
-                <span className="guest-name">{guest.name}</span>
-                <span className="guest-count">
-                  {guest.guests_count} {guest.guests_count === 1 ? 'persona' : 'personas'}
-                </span>
-              </div>
-              <div className="guest-actions">
-                <select
-                  value={guest.rsvp}
-                  onChange={(e) => updateRsvp(guest, e.target.value)}
-                >
-                  {Object.entries(RSVP_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="guest-delete"
-                  onClick={() => removeGuest(guest.id)}
-                  aria-label={`Eliminar a ${guest.name}`}
-                >
-                  ✕
-                </button>
-              </div>
-            </li>
+            <GuestItem key={guest.id} guest={guest} onSave={saveGuest} onDelete={removeGuest} />
           ))}
         </ul>
       )}

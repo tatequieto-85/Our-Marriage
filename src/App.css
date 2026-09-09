@@ -148,14 +148,25 @@
   gap: 0.5rem;
 }
 
+.guests-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.55;
+  margin: 0 0 0.75rem;
+}
+
 .guest-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 3rem;
   padding: 0.6rem 0.75rem;
   border-radius: 10px;
   background: #fdf2f8;
   border-left: 4px solid #f0c6d8;
+  overflow: hidden;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .guest-item.rsvp-yes {
@@ -180,22 +191,93 @@
   opacity: 0.65;
 }
 
-.guest-actions {
+.guest-rsvp-badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+}
+
+/* Panel de Editar/Borrar: solo visible al mantener presionado un invitado */
+.guest-actions-panel {
   display: flex;
-  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.guest-action-btn {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+}
+
+.guest-action-btn.edit {
+  background: #db2777;
+}
+
+.guest-action-btn.edit:hover {
+  background: #be185d;
+}
+
+.guest-action-btn.delete {
+  background: #ef4444;
+}
+
+.guest-action-btn.delete:hover {
+  background: #dc2626;
+}
+
+.guest-action-btn.save {
+  background: #22c55e;
+}
+
+.guest-action-btn.save:hover {
+  background: #16a34a;
+}
+
+.guest-action-btn.cancel {
+  background: #9ca3af;
+}
+
+.guest-action-btn.cancel:hover {
+  background: #6b7280;
+}
+
+.guest-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.guest-edit-form input,
+.guest-edit-form select {
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #f0c6d8;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.guest-edit-row {
+  display: flex;
   gap: 0.4rem;
 }
 
-.guest-actions select {
-  padding: 0.3rem 0.4rem;
-  font-size: 0.85rem;
+.guest-edit-row input[type='number'] {
+  width: 4rem;
 }
 
-.guest-delete {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #b91c1c;
-  font-size: 1rem;
-  padding: 0.2rem;
+.guest-edit-row select {
+  flex: 1;
+}
+
+.guest-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
 }
