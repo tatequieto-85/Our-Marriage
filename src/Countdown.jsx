@@ -88,31 +88,23 @@ function Countdown({ compact = false }) {
     )
   }
 
-  const pad = (n) => String(n).padStart(2, '0')
-
   return (
     <>
       <div className={`countdown${compact ? ' compact' : ''}`} {...longPressHandlers}>
-        {compact ? (
-          <span className="countdown-compact-text">
-            {pad(timeLeft.days)}:{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}
-          </span>
-        ) : (
-          <div className="countdown-grid">
-            <div className="countdown-item">
-              <span className="countdown-number">{timeLeft.days}</span>
-              <span className="countdown-label">Días</span>
-            </div>
-            <div className="countdown-item">
-              <span className="countdown-number">{timeLeft.hours}</span>
-              <span className="countdown-label">Horas</span>
-            </div>
-            <div className="countdown-item">
-              <span className="countdown-number">{timeLeft.minutes}</span>
-              <span className="countdown-label">Minutos</span>
-            </div>
+        <div className={`countdown-grid${compact ? ' compact' : ''}`}>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.days}</span>
+            {!compact && <span className="countdown-label">Días</span>}
           </div>
-        )}
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.hours}</span>
+            {!compact && <span className="countdown-label">Horas</span>}
+          </div>
+          <div className="countdown-item">
+            <span className="countdown-number">{timeLeft.minutes}</span>
+            {!compact && <span className="countdown-label">Minutos</span>}
+          </div>
+        </div>
       </div>
 
       {showModal && (

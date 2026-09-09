@@ -129,11 +129,21 @@
   padding: 0 0.75rem 0 0;
 }
 
-.countdown-compact-text {
-  font-size: 0.95rem;
-  font-weight: 600;
+.countdown-grid.compact {
+  display: flex;
+  width: auto;
+  gap: 0.3rem;
+}
+
+.countdown-grid.compact .countdown-item {
+  border-radius: 8px;
+  padding: 0.2rem 0.4rem;
+  box-shadow: none;
+}
+
+.countdown-grid.compact .countdown-number {
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
-  color: var(--gold-dark);
 }
 
 .home-menu {
