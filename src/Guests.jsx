@@ -73,9 +73,7 @@ function Guests() {
   }
 
   return (
-    <div className="guests">
-      <h2>Lista de invitados</h2>
-
+    <>
       <form className="guests-form" onSubmit={addGuest}>
         <input
           type="text"
@@ -109,7 +107,7 @@ function Guests() {
           ))}
         </ul>
       )}
-    </div>
+    </>
   )
 }
 
