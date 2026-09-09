@@ -93,6 +93,32 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
+    const settingsMatch = url.pathname.match(/^\/api\/settings\/([a-z0-9_-]+)$/i);
+    if (settingsMatch && request.method === 'GET') {
+      const key = settingsMatch[1];
+      const result = await env.DB.prepare('SELECT key, value FROM app_settings WHERE key = ?')
+        .bind(key)
+        .first();
+      if (!result) return json({ error: 'Not found' }, origin, 404);
+      return json(result, origin);
+    }
+
+    if (settingsMatch && request.method === 'PUT') {
+      const key = settingsMatch[1];
+      const body = await request.json().catch(() => null);
+      const value = body && typeof body === 'object' ? (body as Record<string, unknown>).value : undefined;
+      if (typeof value !== 'string' || value.trim() === '') {
+        return json({ error: 'Invalid value' }, origin, 400);
+      }
+
+      const result = await env.DB.prepare(
+        'INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value RETURNING key, value'
+      )
+        .bind(key, value)
+        .first();
+      return json(result, origin);
+    }
+
     return json({ error: 'Not found' }, origin, 404);
   },
 } satisfies ExportedHandler<Env>;
