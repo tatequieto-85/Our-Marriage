@@ -18,7 +18,9 @@
   background: var(--cream);
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
-  padding-bottom: 2rem;
+  padding: 0 1rem calc(2rem + env(safe-area-inset-bottom));
+  padding-top: env(safe-area-inset-top);
+  box-sizing: border-box;
 }
 
 .countdown {
@@ -92,7 +94,9 @@
 }
 
 .guests {
-  width: min(480px, 90vw);
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
   background: var(--white);
   border: 1px solid var(--gold-light);
   border-radius: 16px;
@@ -109,35 +113,41 @@
 
 .guests-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
 .guests-form input[type='text'] {
-  flex: 1;
+  flex: 1 1 60%;
 }
 
 .guests-form input[type='number'] {
-  width: 4rem;
+  flex: 0 1 4.5rem;
 }
 
 .guests-form input,
 .guests-form select {
-  padding: 0.5rem;
+  padding: 0.65rem 0.6rem;
   border: 1px solid var(--gold-light);
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  min-height: 2.75rem;
   background: var(--cream);
   color: var(--text);
+  box-sizing: border-box;
 }
 
 .guests-form button {
+  flex: 1 1 100%;
   background: var(--gold);
   color: var(--white);
   border: none;
   border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
+  padding: 0.7rem 1rem;
+  min-height: 2.75rem;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -228,7 +238,8 @@
   border: none;
   border-radius: 8px;
   padding: 0.6rem 0;
-  font-size: 0.9rem;
+  min-height: 2.75rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--white);
   cursor: pointer;
@@ -275,12 +286,14 @@
 
 .guest-edit-form input,
 .guest-edit-form select {
-  padding: 0.45rem 0.5rem;
+  padding: 0.55rem 0.5rem;
   border: 1px solid var(--gold-light);
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  min-height: 2.5rem;
   background: var(--white);
   color: var(--text);
+  box-sizing: border-box;
 }
 
 .guest-edit-row {
@@ -289,7 +302,8 @@
 }
 
 .guest-edit-row input[type='number'] {
-  width: 4rem;
+  flex: 0 1 4.5rem;
+  min-width: 0;
 }
 
 .guest-edit-row select {
