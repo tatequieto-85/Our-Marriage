@@ -43,6 +43,13 @@ function parseGuestInput(value: unknown): GuestInput | null {
   };
 }
 
+function parseIdeaInput(value: unknown): { text: string } | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (typeof record.text !== 'string' || record.text.trim() === '') return null;
+  return { text: record.text.trim() };
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const origin = request.headers.get('Origin');
@@ -90,6 +97,47 @@ export default {
     if (guestIdMatch && request.method === 'DELETE') {
       const id = Number(guestIdMatch[1]);
       await env.DB.prepare('DELETE FROM guests WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    if (url.pathname === '/api/ideas' && request.method === 'GET') {
+      const { results } = await env.DB.prepare(
+        'SELECT id, text, photo_key, audio_key, created_at FROM ideas ORDER BY created_at ASC, id ASC'
+      ).all();
+      return json(results, origin);
+    }
+
+    if (url.pathname === '/api/ideas' && request.method === 'POST') {
+      const body = parseIdeaInput(await request.json().catch(() => null));
+      if (!body) return json({ error: 'Invalid idea data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'INSERT INTO ideas (text) VALUES (?) RETURNING id, text, photo_key, audio_key, created_at'
+      )
+        .bind(body.text)
+        .first();
+      return json(result, origin, 201);
+    }
+
+    const ideaIdMatch = url.pathname.match(/^\/api\/ideas\/(\d+)$/);
+    if (ideaIdMatch && request.method === 'PATCH') {
+      const id = Number(ideaIdMatch[1]);
+      const body = parseIdeaInput(await request.json().catch(() => null));
+      if (!body) return json({ error: 'Invalid idea data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE ideas SET text = ? WHERE id = ? RETURNING id, text, photo_key, audio_key, created_at'
+      )
+        .bind(body.text, id)
+        .first();
+
+      if (!result) return json({ error: 'Idea not found' }, origin, 404);
+      return json(result, origin);
+    }
+
+    if (ideaIdMatch && request.method === 'DELETE') {
+      const id = Number(ideaIdMatch[1]);
+      await env.DB.prepare('DELETE FROM ideas WHERE id = ?').bind(id).run();
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
