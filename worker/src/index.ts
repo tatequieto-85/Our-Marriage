@@ -34,7 +34,7 @@ function parseGuestInput(value: unknown): GuestInput | null {
   if (rsvp !== undefined && rsvp !== 'pending' && rsvp !== 'yes' && rsvp !== 'no') return null;
   const guestsCount = record.guests_count;
   if (guestsCount !== undefined && (typeof guestsCount !== 'number' || guestsCount < 1)) return null;
-  if (record.notes !== undefined && typeof record.notes !== 'string') return null;
+  if (record.notes !== undefined && record.notes !== null && typeof record.notes !== 'string') return null;
   return {
     name: record.name.trim(),
     rsvp: rsvp as GuestInput['rsvp'],
