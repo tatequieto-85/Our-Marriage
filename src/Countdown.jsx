@@ -95,7 +95,7 @@ function Countdown({ compact = false }) {
       <div className={`countdown${compact ? ' compact' : ''}`} {...longPressHandlers}>
         {compact ? (
           <span className="countdown-compact-text">
-            {pad(timeLeft.days)}:{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+            {pad(timeLeft.days)}:{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}
           </span>
         ) : (
           <div className="countdown-grid">
@@ -110,10 +110,6 @@ function Countdown({ compact = false }) {
             <div className="countdown-item">
               <span className="countdown-number">{timeLeft.minutes}</span>
               <span className="countdown-label">Minutos</span>
-            </div>
-            <div className="countdown-item">
-              <span className="countdown-number">{timeLeft.seconds}</span>
-              <span className="countdown-label">Segundos</span>
             </div>
           </div>
         )}

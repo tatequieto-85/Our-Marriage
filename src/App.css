@@ -32,7 +32,7 @@
 }
 
 .top-bar.home-size {
-  height: 33vh;
+  height: 25vh;
 }
 
 .top-bar.compact-size {
@@ -76,7 +76,7 @@
 
 .countdown-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.6rem;
   width: 100%;
 }
