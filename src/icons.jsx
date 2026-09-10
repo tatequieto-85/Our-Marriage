@@ -57,6 +57,25 @@ export function StorageIcon() {
   )
 }
 
+export function GalleryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="15" height="14" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="m6 17 3.5-4 2.5 3 2-2.5L18 17" />
+      <path d="M20 8v9a2 2 0 0 1-2 2H8" />
+    </svg>
+  )
+}
+
+export function HeartIcon({ filled = false }) {
+  return (
+    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20.5s-7.5-4.6-9.8-9.3C.8 7.8 2.4 4.5 5.6 3.8c2-.4 3.9.5 5 2.1 1.1-1.6 3-2.5 5-2.1 3.2.7 4.8 4 3.4 7.4-2.3 4.7-9.8 9.3-9.8 9.3Z" />
+    </svg>
+  )
+}
+
 export function SparkleIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

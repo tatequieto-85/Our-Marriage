@@ -1,0 +1,1 @@
+ALTER TABLE gallery_photos ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;

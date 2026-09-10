@@ -319,6 +319,10 @@
   transform: translateX(-50%);
   width: calc(100% - 2rem);
   max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   background: var(--gold);
   color: var(--white);
   border: none;
@@ -329,6 +333,11 @@
   box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
   cursor: pointer;
   z-index: 40;
+}
+
+.fab-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .fab-button:hover {
@@ -707,54 +716,57 @@
   margin: 0 0 1rem;
 }
 
-.photo-frame {
-  position: fixed;
-  left: 50%;
-  bottom: calc(1rem + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  width: min(42vw, 160px);
-  aspect-ratio: 4 / 5;
-  padding: 0.5rem;
-  background: linear-gradient(155deg, var(--gold), var(--gold-dark));
-  border-radius: 10px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
-  z-index: 30;
-}
-
-.photo-frame-inner {
-  position: relative;
+.photo-carousel {
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
-  border: 2px solid var(--white);
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--white);
+  margin-bottom: 0.5rem;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 0.6rem;
+  padding: 0 8%;
+  box-sizing: border-box;
+  scrollbar-width: none;
 }
 
-.photo-frame-img {
-  position: absolute;
-  inset: 0;
+.photo-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.photo-carousel-slide {
+  position: relative;
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.photo-carousel-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 1s ease;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.photo-frame-img.active {
-  opacity: 1;
+.photo-favorite-heart {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: rgba(255, 255, 255, 0.75);
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
 }
 
-.gallery-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin: 1.5rem 0 1rem;
-}
-
-.gallery-header .tasks-done-title {
-  margin: 0;
+.photo-favorite-heart.favorite {
+  color: #e0435c;
 }
 
 .gallery-grid {

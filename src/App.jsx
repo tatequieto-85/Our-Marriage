@@ -5,8 +5,9 @@ import Section from './Section'
 import Guests from './Guests'
 import Ideas from './Ideas'
 import Tasks from './Tasks'
+import Gallery from './Gallery'
 import Storage from './Storage'
-import PhotoFrame from './PhotoFrame'
+import PhotoCarousel from './PhotoCarousel'
 import ComingSoon from './ComingSoon'
 import VersionBadge from './VersionBadge'
 import './App.css'
@@ -15,7 +16,7 @@ const SECTION_TITLES = {
   guests: 'Invitados',
   ideas: 'Ideas',
   tasks: 'Tareas',
-  'soon-3': 'Próximamente',
+  gallery: 'Galería',
   'soon-4': 'Próximamente',
   storage: 'Almacenamiento',
 }
@@ -32,8 +33,8 @@ function App() {
 
       {view === 'home' ? (
         <>
+          <PhotoCarousel />
           <HomeMenu onSelect={setView} />
-          <PhotoFrame />
         </>
       ) : (
         <Section title={SECTION_TITLES[view]} onBack={() => setView('home')}>
@@ -43,6 +44,8 @@ function App() {
             <Ideas />
           ) : view === 'tasks' ? (
             <Tasks />
+          ) : view === 'gallery' ? (
+            <Gallery />
           ) : view === 'storage' ? (
             <Storage />
           ) : (

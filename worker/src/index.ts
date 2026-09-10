@@ -108,6 +108,22 @@ function toTaskResponse(row: TaskRow, origin: string) {
   };
 }
 
+interface GalleryRow {
+  id: number;
+  photo_key: string;
+  is_favorite: number;
+  created_at: string;
+}
+
+function toGalleryResponse(row: GalleryRow, origin: string) {
+  return {
+    id: row.id,
+    photo_url: `${origin}/api/media/${row.photo_key}`,
+    is_favorite: Boolean(row.is_favorite),
+    created_at: row.created_at,
+  };
+}
+
 async function uploadFile(env: Env, file: File, prefix: string): Promise<string> {
   const key = `${prefix}/${crypto.randomUUID()}`;
   await env.MEDIA.put(key, await file.arrayBuffer(), {
@@ -340,16 +356,9 @@ export default {
 
     if (url.pathname === '/api/gallery' && request.method === 'GET') {
       const { results } = await env.DB.prepare(
-        'SELECT id, photo_key, created_at FROM gallery_photos ORDER BY created_at ASC, id ASC'
-      ).all<{ id: number; photo_key: string; created_at: string }>();
-      return json(
-        results.map((row) => ({
-          id: row.id,
-          photo_url: `${url.origin}/api/media/${row.photo_key}`,
-          created_at: row.created_at,
-        })),
-        origin
-      );
+        'SELECT id, photo_key, is_favorite, created_at FROM gallery_photos ORDER BY created_at ASC, id ASC'
+      ).all<GalleryRow>();
+      return json(results.map((row) => toGalleryResponse(row, url.origin)), origin);
     }
 
     if (url.pathname === '/api/gallery' && request.method === 'POST') {
@@ -363,15 +372,31 @@ export default {
       const photoKey = await uploadFile(env, photoFile, 'gallery');
 
       const result = await env.DB.prepare(
-        'INSERT INTO gallery_photos (photo_key) VALUES (?) RETURNING id, photo_key, created_at'
+        'INSERT INTO gallery_photos (photo_key) VALUES (?) RETURNING id, photo_key, is_favorite, created_at'
       )
         .bind(photoKey)
-        .first<{ id: number; photo_key: string; created_at: string }>();
-      return json(
-        { id: result!.id, photo_url: `${url.origin}/api/media/${result!.photo_key}`, created_at: result!.created_at },
-        origin,
-        201
-      );
+        .first<GalleryRow>();
+      return json(toGalleryResponse(result!, url.origin), origin, 201);
+    }
+
+    const galleryFavoriteMatch = url.pathname.match(/^\/api\/gallery\/(\d+)\/favorite$/);
+    if (galleryFavoriteMatch && request.method === 'PUT') {
+      const id = Number(galleryFavoriteMatch[1]);
+      const body = await request.json().catch(() => null);
+      const isFavorite =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).is_favorite === 'boolean'
+          ? ((body as Record<string, unknown>).is_favorite as boolean)
+          : null;
+      if (isFavorite === null) return json({ error: 'Invalid value' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE gallery_photos SET is_favorite = ? WHERE id = ? RETURNING id, photo_key, is_favorite, created_at'
+      )
+        .bind(isFavorite ? 1 : 0, id)
+        .first<GalleryRow>();
+
+      if (!result) return json({ error: 'Photo not found' }, origin, 404);
+      return json(toGalleryResponse(result, url.origin), origin);
     }
 
     const galleryIdMatch = url.pathname.match(/^\/api\/gallery\/(\d+)$/);
