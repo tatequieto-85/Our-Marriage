@@ -706,3 +706,89 @@
   opacity: 0.6;
   margin: 0 0 1rem;
 }
+
+.photo-frame {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(42vw, 160px);
+  aspect-ratio: 4 / 5;
+  padding: 0.5rem;
+  background: linear-gradient(155deg, var(--gold), var(--gold-dark));
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  z-index: 30;
+}
+
+.photo-frame-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 2px solid var(--white);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.photo-frame-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.photo-frame-img.active {
+  opacity: 1;
+}
+
+.gallery-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.gallery-header .tasks-done-title {
+  margin: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.gallery-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--cream);
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-thumb-delete {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: rgba(168, 88, 63, 0.85);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}

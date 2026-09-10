@@ -338,6 +338,53 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
+    if (url.pathname === '/api/gallery' && request.method === 'GET') {
+      const { results } = await env.DB.prepare(
+        'SELECT id, photo_key, created_at FROM gallery_photos ORDER BY created_at ASC, id ASC'
+      ).all<{ id: number; photo_key: string; created_at: string }>();
+      return json(
+        results.map((row) => ({
+          id: row.id,
+          photo_url: `${url.origin}/api/media/${row.photo_key}`,
+          created_at: row.created_at,
+        })),
+        origin
+      );
+    }
+
+    if (url.pathname === '/api/gallery' && request.method === 'POST') {
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+
+      const photoFile = formData.get('photo');
+      if (!(photoFile instanceof File) || photoFile.size === 0) {
+        return json({ error: 'Invalid photo' }, origin, 400);
+      }
+      const photoKey = await uploadFile(env, photoFile, 'gallery');
+
+      const result = await env.DB.prepare(
+        'INSERT INTO gallery_photos (photo_key) VALUES (?) RETURNING id, photo_key, created_at'
+      )
+        .bind(photoKey)
+        .first<{ id: number; photo_key: string; created_at: string }>();
+      return json(
+        { id: result!.id, photo_url: `${url.origin}/api/media/${result!.photo_key}`, created_at: result!.created_at },
+        origin,
+        201
+      );
+    }
+
+    const galleryIdMatch = url.pathname.match(/^\/api\/gallery\/(\d+)$/);
+    if (galleryIdMatch && request.method === 'DELETE') {
+      const id = Number(galleryIdMatch[1]);
+      const existing = await env.DB.prepare('SELECT photo_key FROM gallery_photos WHERE id = ?')
+        .bind(id)
+        .first<{ photo_key: string }>();
+      if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
+      await env.DB.prepare('DELETE FROM gallery_photos WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
     if (url.pathname.startsWith('/api/media/') && request.method === 'GET') {
       const key = url.pathname.slice('/api/media/'.length);
       const object = await env.MEDIA.get(key);

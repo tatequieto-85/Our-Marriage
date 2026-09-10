@@ -6,6 +6,7 @@ import Guests from './Guests'
 import Ideas from './Ideas'
 import Tasks from './Tasks'
 import Storage from './Storage'
+import PhotoFrame from './PhotoFrame'
 import ComingSoon from './ComingSoon'
 import VersionBadge from './VersionBadge'
 import './App.css'
@@ -30,7 +31,10 @@ function App() {
       </div>
 
       {view === 'home' ? (
-        <HomeMenu onSelect={setView} />
+        <>
+          <HomeMenu onSelect={setView} />
+          <PhotoFrame />
+        </>
       ) : (
         <Section title={SECTION_TITLES[view]} onBack={() => setView('home')}>
           {view === 'guests' ? (
