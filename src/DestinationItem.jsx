@@ -70,7 +70,7 @@ function DestinationItem({ destination, onSave, onDelete, onClick }) {
   }
 
   return (
-    <li className="guest-item destination-item" ref={itemRef} onClick={onClick} {...longPressHandlers}>
+    <li className="guest-item destination-item" ref={itemRef} onDoubleClick={onClick} {...longPressHandlers}>
       {destination.photo_url && <img src={destination.photo_url} alt="" className="destination-thumb" />}
       <span className="idea-text">{destination.name}</span>
     </li>

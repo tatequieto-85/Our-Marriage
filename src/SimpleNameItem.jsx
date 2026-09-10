@@ -71,7 +71,7 @@ function SimpleNameItem({ item, onSave, onDelete, onClick }) {
   }
 
   return (
-    <li className="guest-item" ref={itemRef} onClick={onClick} {...longPressHandlers}>
+    <li className="guest-item" ref={itemRef} onDoubleClick={onClick} {...longPressHandlers}>
       <span className="idea-text">{item.name}</span>
     </li>
   )

@@ -85,7 +85,7 @@ function AgencyQuoteCard({ quote, onSave, onDelete, onAddObservation, addingObse
 
   return (
     <>
-      <li className="guest-item" ref={itemRef} onClick={() => setShowObservations(true)} {...longPressHandlers}>
+      <li className="guest-item" ref={itemRef} onDoubleClick={() => setShowObservations(true)} {...longPressHandlers}>
         <div className="task-info">
           <span className="idea-text agency-quote-price">{formatPrice(quote.price)}</span>
           <span className="task-date">
