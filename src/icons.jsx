@@ -38,6 +38,15 @@ export function MicIcon() {
   )
 }
 
+export function TasksIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="m8 12 2.5 2.5L16 9" />
+    </svg>
+  )
+}
+
 export function StorageIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

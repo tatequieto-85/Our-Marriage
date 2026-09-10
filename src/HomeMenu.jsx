@@ -1,9 +1,9 @@
-import { GuestsIcon, IdeasIcon, SparkleIcon, StorageIcon } from './icons'
+import { GuestsIcon, IdeasIcon, TasksIcon, SparkleIcon, StorageIcon } from './icons'
 
 const ITEMS = [
   { id: 'guests', label: 'Invitados', Icon: GuestsIcon },
   { id: 'ideas', label: 'Ideas', Icon: IdeasIcon },
-  { id: 'soon-2', label: 'Próximamente', Icon: SparkleIcon },
+  { id: 'tasks', label: 'Tareas', Icon: TasksIcon },
   { id: 'soon-3', label: 'Próximamente', Icon: SparkleIcon },
   { id: 'soon-4', label: 'Próximamente', Icon: SparkleIcon },
   { id: 'storage', label: 'Almacenamiento', Icon: StorageIcon },
