@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import DestinationItem from './DestinationItem'
 import AddDestinationModal from './AddDestinationModal'
 import DestinationDetail from './DestinationDetail'
+import AgencyQuotesView from './AgencyQuotesView'
 import { API_BASE } from './api'
 
 const API_URL = `${API_BASE}/api/destinations`
 
-function Honeymoon() {
+function Honeymoon({ onHeaderChange }) {
   const [destinations, setDestinations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -14,10 +15,21 @@ function Honeymoon() {
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
   const [selectedDestination, setSelectedDestination] = useState(null)
+  const [selectedAgency, setSelectedAgency] = useState(null)
 
   useEffect(() => {
     loadDestinations()
   }, [])
+
+  useEffect(() => {
+    if (selectedAgency) {
+      onHeaderChange({ title: selectedAgency.name, onBack: () => setSelectedAgency(null) })
+    } else if (selectedDestination) {
+      onHeaderChange({ title: selectedDestination.name, onBack: () => setSelectedDestination(null) })
+    } else {
+      onHeaderChange(null)
+    }
+  }, [selectedDestination, selectedAgency, onHeaderChange])
 
   async function loadDestinations() {
     setLoading(true)
@@ -78,11 +90,15 @@ function Honeymoon() {
     }
   }
 
+  if (selectedAgency) {
+    return <AgencyQuotesView agency={selectedAgency} />
+  }
+
   if (selectedDestination) {
     return (
       <DestinationDetail
         destination={selectedDestination}
-        onBack={() => setSelectedDestination(null)}
+        onSelectAgency={setSelectedAgency}
       />
     )
   }

@@ -3,7 +3,7 @@ import AgencyQuoteCard from './AgencyQuoteCard'
 import AddAgencyQuoteModal from './AddAgencyQuoteModal'
 import { API_BASE } from './api'
 
-function AgencyQuotesView({ agency, onBack }) {
+function AgencyQuotesView({ agency }) {
   const [quotes, setQuotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -103,14 +103,6 @@ function AgencyQuotesView({ agency, onBack }) {
 
   return (
     <div className="sub-section">
-      <div className="sub-section-header">
-        <button type="button" className="back-button" onClick={onBack} aria-label="Volver">
-          ←
-        </button>
-        <h3 className="sub-section-title">{agency.name}</h3>
-        <span className="back-button-spacer" aria-hidden="true" />
-      </div>
-
       {error && <p className="guests-error">{error}</p>}
 
       {loading ? (

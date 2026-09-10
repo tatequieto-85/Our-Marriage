@@ -3,10 +3,9 @@ import SimpleNameItem from './SimpleNameItem'
 import PlaceItem from './PlaceItem'
 import AddNameModal from './AddNameModal'
 import AddPlaceModal from './AddPlaceModal'
-import AgencyQuotesView from './AgencyQuotesView'
 import { API_BASE } from './api'
 
-function DestinationDetail({ destination, onBack }) {
+function DestinationDetail({ destination, onSelectAgency }) {
   const [agencies, setAgencies] = useState([])
   const [places, setPlaces] = useState([])
   const [hotels, setHotels] = useState([])
@@ -18,7 +17,6 @@ function DestinationDetail({ destination, onBack }) {
   const [showAddHotel, setShowAddHotel] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
-  const [selectedAgency, setSelectedAgency] = useState(null)
 
   const BASE_URL = `${API_BASE}/api/destinations/${destination.id}`
 
@@ -181,20 +179,8 @@ function DestinationDetail({ destination, onBack }) {
     }
   }
 
-  if (selectedAgency) {
-    return <AgencyQuotesView agency={selectedAgency} onBack={() => setSelectedAgency(null)} />
-  }
-
   return (
     <div className="sub-section">
-      <div className="sub-section-header">
-        <button type="button" className="back-button" onClick={onBack} aria-label="Volver">
-          ←
-        </button>
-        <h3 className="sub-section-title">{destination.name}</h3>
-        <span className="back-button-spacer" aria-hidden="true" />
-      </div>
-
       {destination.photo_url && <img src={destination.photo_url} alt="" className="idea-detail-photo" />}
       {error && <p className="guests-error">{error}</p>}
 
@@ -214,7 +200,7 @@ function DestinationDetail({ destination, onBack }) {
                     item={agency}
                     onSave={saveAgency}
                     onDelete={removeAgency}
-                    onClick={() => setSelectedAgency(agency)}
+                    onClick={() => onSelectAgency(agency)}
                   />
                 ))}
               </ul>

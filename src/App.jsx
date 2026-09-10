@@ -23,6 +23,12 @@ const SECTION_TITLES = {
 
 function App() {
   const [view, setView] = useState('home')
+  const [subHeader, setSubHeader] = useState(null)
+
+  function navigate(next) {
+    setSubHeader(null)
+    setView(next)
+  }
 
   return (
     <div className="app">
@@ -33,11 +39,14 @@ function App() {
 
       {view === 'home' ? (
         <>
-          <HomeMenu onSelect={setView} />
+          <HomeMenu onSelect={navigate} />
           <PhotoCarousel />
         </>
       ) : (
-        <Section title={SECTION_TITLES[view]} onBack={() => setView('home')}>
+        <Section
+          title={subHeader?.title ?? SECTION_TITLES[view]}
+          onBack={subHeader?.onBack ?? (() => navigate('home'))}
+        >
           {view === 'guests' ? (
             <Guests />
           ) : view === 'ideas' ? (
@@ -47,7 +56,7 @@ function App() {
           ) : view === 'quotes' ? (
             <Quotes />
           ) : view === 'honeymoon' ? (
-            <Honeymoon />
+            <Honeymoon onHeaderChange={setSubHeader} />
           ) : (
             <Storage />
           )}
