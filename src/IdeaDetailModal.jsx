@@ -7,6 +7,11 @@ function IdeaDetailModal({ idea, onClose }) {
           <img src={idea.photo_url} alt="" className="idea-detail-photo" />
         )}
         <p className="idea-detail-text">{idea.text}</p>
+        {idea.url && (
+          <a href={idea.url} target="_blank" rel="noopener noreferrer" className="idea-detail-link">
+            {idea.url}
+          </a>
+        )}
         {idea.audio_url && <audio src={idea.audio_url} controls className="idea-detail-audio" />}
         <div className="guest-edit-actions">
           <button type="button" className="guest-action-btn cancel" onClick={onClose}>

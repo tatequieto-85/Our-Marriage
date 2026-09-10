@@ -43,16 +43,19 @@ function parseGuestInput(value: unknown): GuestInput | null {
   };
 }
 
-function parseIdeaInput(value: unknown): { text: string } | null {
+function parseIdeaInput(value: unknown): { text: string; url: string | null } | null {
   if (typeof value !== 'object' || value === null) return null;
   const record = value as Record<string, unknown>;
   if (typeof record.text !== 'string' || record.text.trim() === '') return null;
-  return { text: record.text.trim() };
+  if (record.url !== undefined && record.url !== null && typeof record.url !== 'string') return null;
+  const url = typeof record.url === 'string' ? record.url.trim() : null;
+  return { text: record.text.trim(), url: url || null };
 }
 
 interface IdeaRow {
   id: number;
   text: string;
+  url: string | null;
   photo_key: string | null;
   audio_key: string | null;
   created_at: string;
@@ -62,6 +65,7 @@ function toIdeaResponse(row: IdeaRow, origin: string) {
   return {
     id: row.id,
     text: row.text,
+    url: row.url,
     photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
     audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
     created_at: row.created_at,
@@ -130,7 +134,7 @@ export default {
 
     if (url.pathname === '/api/ideas' && request.method === 'GET') {
       const { results } = await env.DB.prepare(
-        'SELECT id, text, photo_key, audio_key, created_at FROM ideas ORDER BY created_at ASC, id ASC'
+        'SELECT id, text, url, photo_key, audio_key, created_at FROM ideas ORDER BY created_at ASC, id ASC'
       ).all<IdeaRow>();
       return json(results.map((row) => toIdeaResponse(row, url.origin)), origin);
     }
@@ -143,6 +147,8 @@ export default {
       if (typeof text !== 'string' || text.trim() === '') {
         return json({ error: 'Invalid idea data' }, origin, 400);
       }
+      const ideaUrl = formData.get('url');
+      const trimmedUrl = typeof ideaUrl === 'string' && ideaUrl.trim() !== '' ? ideaUrl.trim() : null;
 
       const photoFile = formData.get('photo');
       const audioFile = formData.get('audio');
@@ -152,9 +158,9 @@ export default {
         audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'ideas/audio') : null;
 
       const result = await env.DB.prepare(
-        'INSERT INTO ideas (text, photo_key, audio_key) VALUES (?, ?, ?) RETURNING id, text, photo_key, audio_key, created_at'
+        'INSERT INTO ideas (text, url, photo_key, audio_key) VALUES (?, ?, ?, ?) RETURNING id, text, url, photo_key, audio_key, created_at'
       )
-        .bind(text.trim(), photoKey, audioKey)
+        .bind(text.trim(), trimmedUrl, photoKey, audioKey)
         .first<IdeaRow>();
       return json(toIdeaResponse(result!, url.origin), origin, 201);
     }
@@ -166,9 +172,9 @@ export default {
       if (!body) return json({ error: 'Invalid idea data' }, origin, 400);
 
       const result = await env.DB.prepare(
-        'UPDATE ideas SET text = ? WHERE id = ? RETURNING id, text, photo_key, audio_key, created_at'
+        'UPDATE ideas SET text = ?, url = ? WHERE id = ? RETURNING id, text, url, photo_key, audio_key, created_at'
       )
-        .bind(body.text, id)
+        .bind(body.text, body.url, id)
         .first<IdeaRow>();
 
       if (!result) return json({ error: 'Idea not found' }, origin, 404);

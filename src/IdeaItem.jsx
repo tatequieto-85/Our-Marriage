@@ -6,6 +6,7 @@ import IdeaDetailModal from './IdeaDetailModal'
 function IdeaItem({ idea, onSave, onDelete }) {
   const [mode, setMode] = useState('view')
   const [text, setText] = useState(idea.text)
+  const [url, setUrl] = useState(idea.url ?? '')
   const [showDetail, setShowDetail] = useState(false)
   const itemRef = useRef(null)
 
@@ -24,13 +25,14 @@ function IdeaItem({ idea, onSave, onDelete }) {
 
   function openEdit() {
     setText(idea.text)
+    setUrl(idea.url ?? '')
     setMode('edit')
   }
 
   function handleSave(event) {
     event.preventDefault()
     if (!text.trim()) return
-    onSave(idea.id, { text: text.trim() })
+    onSave(idea.id, { text: text.trim(), url: url.trim() })
     setMode('view')
   }
 
@@ -49,6 +51,12 @@ function IdeaItem({ idea, onSave, onDelete }) {
             onChange={(e) => setText(e.target.value)}
             required
             autoFocus
+          />
+          <input
+            type="url"
+            placeholder="URL (opcional)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
           />
           <div className="guest-edit-actions">
             <button type="submit" className="guest-action-btn save">

@@ -278,6 +278,7 @@
 .modal-card input[type='datetime-local'],
 .modal-card input[type='text'],
 .modal-card input[type='number'],
+.modal-card input[type='url'],
 .modal-card select {
   padding: 0.6rem;
   border: 1px solid var(--gold-light);
@@ -415,6 +416,13 @@
 .idea-detail-audio {
   width: 100%;
   margin-bottom: 1rem;
+}
+
+.idea-detail-link {
+  display: block;
+  margin: 0 0 1rem;
+  color: var(--gold-dark);
+  word-break: break-all;
 }
 
 .media-row {

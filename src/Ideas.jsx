@@ -31,12 +31,13 @@ function Ideas() {
     }
   }
 
-  async function addIdea({ text, photo, audio }) {
+  async function addIdea({ text, url, photo, audio }) {
     setAdding(true)
     setAddError(null)
     try {
       const formData = new FormData()
       formData.append('text', text)
+      if (url) formData.append('url', url)
       if (photo) formData.append('photo', photo)
       if (audio) formData.append('audio', audio, 'audio.webm')
 

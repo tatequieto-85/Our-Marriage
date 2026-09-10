@@ -3,6 +3,7 @@ import { CameraIcon, MicIcon } from './icons'
 
 function AddIdeaModal({ onSave, onCancel, saving, error }) {
   const [text, setText] = useState('')
+  const [url, setUrl] = useState('')
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [audioBlob, setAudioBlob] = useState(null)
@@ -81,7 +82,7 @@ function AddIdeaModal({ onSave, onCancel, saving, error }) {
   function handleSubmit(event) {
     event.preventDefault()
     if (!text.trim()) return
-    onSave({ text: text.trim(), photo: photoFile, audio: audioBlob })
+    onSave({ text: text.trim(), url: url.trim(), photo: photoFile, audio: audioBlob })
   }
 
   return (
@@ -96,6 +97,13 @@ function AddIdeaModal({ onSave, onCancel, saving, error }) {
             onChange={(e) => setText(e.target.value)}
             required
             autoFocus
+          />
+
+          <input
+            type="url"
+            placeholder="URL (opcional)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
           />
 
           <div className="media-row">
