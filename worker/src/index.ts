@@ -124,6 +124,34 @@ function toGalleryResponse(row: GalleryRow, origin: string) {
   };
 }
 
+interface QuoteRow {
+  id: number;
+  text: string;
+  document_key: string | null;
+  document_name: string | null;
+  status: string;
+  created_at: string;
+}
+
+interface QuoteObservationRow {
+  id: number;
+  quote_id: number;
+  text: string;
+  created_at: string;
+}
+
+function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObservationRow[]) {
+  return {
+    id: row.id,
+    text: row.text,
+    document_url: row.document_key ? `${origin}/api/media/${row.document_key}` : null,
+    document_name: row.document_name,
+    status: row.status,
+    observations: observations.map((o) => ({ id: o.id, text: o.text, created_at: o.created_at })),
+    created_at: row.created_at,
+  };
+}
+
 async function uploadFile(env: Env, file: File, prefix: string): Promise<string> {
   const key = `${prefix}/${crypto.randomUUID()}`;
   await env.MEDIA.put(key, await file.arrayBuffer(), {
@@ -351,6 +379,163 @@ export default {
       if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
       if (existing?.audio_key) await env.MEDIA.delete(existing.audio_key);
       await env.DB.prepare('DELETE FROM tasks WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    if (url.pathname === '/api/quotes' && request.method === 'GET') {
+      const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
+        env.DB.prepare(
+          'SELECT id, text, document_key, document_name, status, created_at FROM quotes ORDER BY created_at ASC, id ASC'
+        ).all<QuoteRow>(),
+        env.DB.prepare(
+          'SELECT id, quote_id, text, created_at FROM quote_observations ORDER BY created_at ASC, id ASC'
+        ).all<QuoteObservationRow>(),
+      ]);
+      const obsByQuote = new Map<number, QuoteObservationRow[]>();
+      for (const obs of obsRows) {
+        const list = obsByQuote.get(obs.quote_id) ?? [];
+        list.push(obs);
+        obsByQuote.set(obs.quote_id, list);
+      }
+      return json(
+        quoteRows.map((row) => toQuoteResponse(row, url.origin, obsByQuote.get(row.id) ?? [])),
+        origin
+      );
+    }
+
+    if (url.pathname === '/api/quotes' && request.method === 'POST') {
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+
+      const text = formData.get('text');
+      if (typeof text !== 'string' || text.trim() === '') {
+        return json({ error: 'Invalid quote data' }, origin, 400);
+      }
+
+      const documentFile = formData.get('document');
+      const documentKey =
+        documentFile instanceof File && documentFile.size > 0 ? await uploadFile(env, documentFile, 'quotes') : null;
+      const documentName = documentFile instanceof File && documentFile.size > 0 ? documentFile.name : null;
+
+      const result = await env.DB.prepare(
+        'INSERT INTO quotes (text, document_key, document_name) VALUES (?, ?, ?) RETURNING id, text, document_key, document_name, status, created_at'
+      )
+        .bind(text.trim(), documentKey, documentName)
+        .first<QuoteRow>();
+      return json(toQuoteResponse(result!, url.origin, []), origin, 201);
+    }
+
+    const quoteStatusMatch = url.pathname.match(/^\/api\/quotes\/(\d+)\/status$/);
+    if (quoteStatusMatch && request.method === 'PUT') {
+      const id = Number(quoteStatusMatch[1]);
+      const body = await request.json().catch(() => null);
+      const status =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).status === 'string'
+          ? ((body as Record<string, unknown>).status as string)
+          : '';
+      if (status !== 'pending' && status !== 'desestimada') {
+        return json({ error: 'Invalid status' }, origin, 400);
+      }
+
+      const result = await env.DB.prepare(
+        'UPDATE quotes SET status = ? WHERE id = ? RETURNING id, text, document_key, document_name, status, created_at'
+      )
+        .bind(status, id)
+        .first<QuoteRow>();
+      if (!result) return json({ error: 'Quote not found' }, origin, 404);
+
+      const { results: obsRows } = await env.DB.prepare(
+        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(id)
+        .all<QuoteObservationRow>();
+      return json(toQuoteResponse(result, url.origin, obsRows), origin);
+    }
+
+    const quoteObservationsMatch = url.pathname.match(/^\/api\/quotes\/(\d+)\/observations$/);
+    if (quoteObservationsMatch && request.method === 'POST') {
+      const id = Number(quoteObservationsMatch[1]);
+      const body = await request.json().catch(() => null);
+      const text =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).text === 'string'
+          ? ((body as Record<string, unknown>).text as string).trim()
+          : '';
+      if (!text) return json({ error: 'Invalid observation' }, origin, 400);
+
+      const quote = await env.DB.prepare(
+        'SELECT id, text, document_key, document_name, status, created_at FROM quotes WHERE id = ?'
+      )
+        .bind(id)
+        .first<QuoteRow>();
+      if (!quote) return json({ error: 'Quote not found' }, origin, 404);
+
+      await env.DB.prepare('INSERT INTO quote_observations (quote_id, text) VALUES (?, ?)').bind(id, text).run();
+
+      const { results: obsRows } = await env.DB.prepare(
+        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(id)
+        .all<QuoteObservationRow>();
+      return json(toQuoteResponse(quote, url.origin, obsRows), origin, 201);
+    }
+
+    const quoteScheduleMatch = url.pathname.match(/^\/api\/quotes\/(\d+)\/schedule-task$/);
+    if (quoteScheduleMatch && request.method === 'POST') {
+      const id = Number(quoteScheduleMatch[1]);
+      const body = await request.json().catch(() => null);
+      const dueDate =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).due_date === 'string'
+          ? ((body as Record<string, unknown>).due_date as string).trim()
+          : '';
+      if (!dueDate) return json({ error: 'Invalid due date' }, origin, 400);
+
+      const quote = await env.DB.prepare('SELECT text FROM quotes WHERE id = ?')
+        .bind(id)
+        .first<{ text: string }>();
+      if (!quote) return json({ error: 'Quote not found' }, origin, 404);
+
+      const task = await env.DB.prepare(
+        'INSERT INTO tasks (text, due_date) VALUES (?, ?) RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+      )
+        .bind(quote.text, dueDate)
+        .first<TaskRow>();
+
+      return json(toTaskResponse(task!, url.origin), origin, 201);
+    }
+
+    const quoteIdMatch = url.pathname.match(/^\/api\/quotes\/(\d+)$/);
+    if (quoteIdMatch && request.method === 'PATCH') {
+      const id = Number(quoteIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      const text =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).text === 'string'
+          ? ((body as Record<string, unknown>).text as string).trim()
+          : '';
+      if (!text) return json({ error: 'Invalid quote data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE quotes SET text = ? WHERE id = ? RETURNING id, text, document_key, document_name, status, created_at'
+      )
+        .bind(text, id)
+        .first<QuoteRow>();
+      if (!result) return json({ error: 'Quote not found' }, origin, 404);
+
+      const { results: obsRows } = await env.DB.prepare(
+        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(id)
+        .all<QuoteObservationRow>();
+      return json(toQuoteResponse(result, url.origin, obsRows), origin);
+    }
+
+    if (quoteIdMatch && request.method === 'DELETE') {
+      const id = Number(quoteIdMatch[1]);
+      const existing = await env.DB.prepare('SELECT document_key FROM quotes WHERE id = ?')
+        .bind(id)
+        .first<{ document_key: string | null }>();
+      if (existing?.document_key) await env.MEDIA.delete(existing.document_key);
+      await env.DB.prepare('DELETE FROM quote_observations WHERE quote_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM quotes WHERE id = ?').bind(id).run();
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 

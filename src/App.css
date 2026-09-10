@@ -798,3 +798,39 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.quote-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.quote-observations-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.quote-observations-list li {
+  background: var(--cream);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.quote-observation-date {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.55;
+  margin-bottom: 0.15rem;
+}
