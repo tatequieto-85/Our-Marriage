@@ -13,5 +13,11 @@
       "database_id": "545d3203-9328-4817-80e7-4259cdf723af",
       "migrations_dir": "migrations"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "nuestra-boda-media"
+    }
   ]
 }

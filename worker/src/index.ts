@@ -50,6 +50,34 @@ function parseIdeaInput(value: unknown): { text: string } | null {
   return { text: record.text.trim() };
 }
 
+interface IdeaRow {
+  id: number;
+  text: string;
+  photo_key: string | null;
+  audio_key: string | null;
+  created_at: string;
+}
+
+function toIdeaResponse(row: IdeaRow, origin: string) {
+  return {
+    id: row.id,
+    text: row.text,
+    photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
+    audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
+    created_at: row.created_at,
+  };
+}
+
+async function uploadFile(env: Env, file: File, prefix: string): Promise<string> {
+  const key = `${prefix}/${crypto.randomUUID()}`;
+  await env.MEDIA.put(key, await file.arrayBuffer(), {
+    httpMetadata: { contentType: file.type || 'application/octet-stream' },
+  });
+  return key;
+}
+
+const STORAGE_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const origin = request.headers.get('Origin');
@@ -103,20 +131,32 @@ export default {
     if (url.pathname === '/api/ideas' && request.method === 'GET') {
       const { results } = await env.DB.prepare(
         'SELECT id, text, photo_key, audio_key, created_at FROM ideas ORDER BY created_at ASC, id ASC'
-      ).all();
-      return json(results, origin);
+      ).all<IdeaRow>();
+      return json(results.map((row) => toIdeaResponse(row, url.origin)), origin);
     }
 
     if (url.pathname === '/api/ideas' && request.method === 'POST') {
-      const body = parseIdeaInput(await request.json().catch(() => null));
-      if (!body) return json({ error: 'Invalid idea data' }, origin, 400);
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+
+      const text = formData.get('text');
+      if (typeof text !== 'string' || text.trim() === '') {
+        return json({ error: 'Invalid idea data' }, origin, 400);
+      }
+
+      const photoFile = formData.get('photo');
+      const audioFile = formData.get('audio');
+      const photoKey =
+        photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'ideas/photo') : null;
+      const audioKey =
+        audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'ideas/audio') : null;
 
       const result = await env.DB.prepare(
-        'INSERT INTO ideas (text) VALUES (?) RETURNING id, text, photo_key, audio_key, created_at'
+        'INSERT INTO ideas (text, photo_key, audio_key) VALUES (?, ?, ?) RETURNING id, text, photo_key, audio_key, created_at'
       )
-        .bind(body.text)
-        .first();
-      return json(result, origin, 201);
+        .bind(text.trim(), photoKey, audioKey)
+        .first<IdeaRow>();
+      return json(toIdeaResponse(result!, url.origin), origin, 201);
     }
 
     const ideaIdMatch = url.pathname.match(/^\/api\/ideas\/(\d+)$/);
@@ -129,16 +169,45 @@ export default {
         'UPDATE ideas SET text = ? WHERE id = ? RETURNING id, text, photo_key, audio_key, created_at'
       )
         .bind(body.text, id)
-        .first();
+        .first<IdeaRow>();
 
       if (!result) return json({ error: 'Idea not found' }, origin, 404);
-      return json(result, origin);
+      return json(toIdeaResponse(result, url.origin), origin);
     }
 
     if (ideaIdMatch && request.method === 'DELETE') {
       const id = Number(ideaIdMatch[1]);
+      const existing = await env.DB.prepare('SELECT photo_key, audio_key FROM ideas WHERE id = ?')
+        .bind(id)
+        .first<{ photo_key: string | null; audio_key: string | null }>();
+      if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
+      if (existing?.audio_key) await env.MEDIA.delete(existing.audio_key);
       await env.DB.prepare('DELETE FROM ideas WHERE id = ?').bind(id).run();
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    if (url.pathname.startsWith('/api/media/') && request.method === 'GET') {
+      const key = url.pathname.slice('/api/media/'.length);
+      const object = await env.MEDIA.get(key);
+      if (!object) return json({ error: 'Not found' }, origin, 404);
+      return new Response(object.body, {
+        headers: {
+          'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          ...corsHeaders(origin),
+        },
+      });
+    }
+
+    if (url.pathname === '/api/storage-usage' && request.method === 'GET') {
+      let totalBytes = 0;
+      let cursor: string | undefined;
+      do {
+        const listing = await env.MEDIA.list({ cursor, limit: 1000 });
+        for (const object of listing.objects) totalBytes += object.size;
+        cursor = listing.truncated ? listing.cursor : undefined;
+      } while (cursor);
+      return json({ used_bytes: totalBytes, limit_bytes: STORAGE_LIMIT_BYTES }, origin);
     }
 
     const settingsMatch = url.pathname.match(/^\/api\/settings\/([a-z0-9_-]+)$/i);
