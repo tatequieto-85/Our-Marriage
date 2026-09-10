@@ -33,8 +33,8 @@ function App() {
 
       {view === 'home' ? (
         <>
-          <PhotoCarousel />
           <HomeMenu onSelect={setView} />
+          <PhotoCarousel />
         </>
       ) : (
         <Section title={SECTION_TITLES[view]} onBack={() => setView('home')}>
