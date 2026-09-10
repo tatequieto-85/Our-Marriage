@@ -3,12 +3,15 @@ import { useLongPress } from './hooks/useLongPress'
 import { useSwipe } from './hooks/useSwipe'
 import QuoteObservationsModal from './QuoteObservationsModal'
 import ConvertToTaskModal from './ConvertToTaskModal'
+import { formatPrice } from './currency'
 
 // mode: 'view' (normal) | 'actions' (mantener presionado) | 'edit' (botón Editar)
 function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObservation, scheduling, addingObservation, observationError }) {
   const isDismissed = quote.status === 'desestimada'
   const [mode, setMode] = useState('view')
   const [text, setText] = useState(quote.text)
+  const [price, setPrice] = useState(quote.price ?? '')
+  const [currency, setCurrency] = useState(quote.currency ?? 'USD')
   const [showObservations, setShowObservations] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
   const itemRef = useRef(null)
@@ -33,13 +36,15 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
 
   function openEdit() {
     setText(quote.text)
+    setPrice(quote.price ?? '')
+    setCurrency(quote.currency ?? 'USD')
     setMode('edit')
   }
 
   function handleSave(event) {
     event.preventDefault()
     if (!text.trim()) return
-    onSave(quote.id, text.trim())
+    onSave(quote.id, { text: text.trim(), price: price === '' ? null : Number(price), currency })
     setMode('view')
   }
 
@@ -63,6 +68,19 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
             required
             autoFocus
           />
+          <div className="guest-edit-row">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Precio"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <option value="USD">USD</option>
+              <option value="PESOS">Pesos</option>
+            </select>
+          </div>
           <div className="guest-edit-actions">
             <button type="submit" className="guest-action-btn save">
               Guardar
@@ -112,11 +130,11 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
         >
           <div className="task-info">
             <span className="idea-text">{quote.text}</span>
-            {quote.observations.length > 0 && (
-              <span className="task-date">
-                {quote.observations.length} {quote.observations.length === 1 ? 'observación' : 'observaciones'}
-              </span>
-            )}
+            <span className="task-date">
+              {formatPrice(quote.price, quote.currency)}
+              {quote.observations.length > 0 &&
+                ` · ${quote.observations.length} ${quote.observations.length === 1 ? 'observación' : 'observaciones'}`}
+            </span>
           </div>
         </div>
       </li>

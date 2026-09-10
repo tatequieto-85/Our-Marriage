@@ -34,12 +34,14 @@ function Quotes() {
     }
   }
 
-  async function addQuote({ text, document, photo, audio }) {
+  async function addQuote({ text, price, currency, document, photo, audio }) {
     setAdding(true)
     setAddError(null)
     try {
       const formData = new FormData()
       formData.append('text', text)
+      if (price) formData.append('price', price)
+      if (currency) formData.append('currency', currency)
       if (document) formData.append('document', document)
       if (photo) formData.append('photo', photo)
       if (audio) formData.append('audio', audio, 'audio.webm')
@@ -56,12 +58,12 @@ function Quotes() {
     }
   }
 
-  async function saveQuote(id, text) {
+  async function saveQuote(id, { text, price, currency }) {
     try {
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, price, currency }),
       })
       if (!res.ok) throw new Error('No se pudo actualizar')
       const updated = await res.json()

@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
 import QuoteObservationsModal from './QuoteObservationsModal'
-
-function formatPrice(price) {
-  if (price === null || price === undefined) return 'Sin precio'
-  return new Intl.NumberFormat('es', { style: 'currency', currency: 'USD' }).format(price)
-}
+import { formatPrice } from './currency'
 
 // mode: 'view' (normal) | 'actions' (mantener presionado) | 'edit' (botón Editar)
 function AgencyQuoteCard({ quote, onSave, onDelete, onAddObservation, addingObservation, observationError }) {
   const [mode, setMode] = useState('view')
   const [price, setPrice] = useState(quote.price ?? '')
+  const [currency, setCurrency] = useState(quote.currency ?? 'USD')
   const [showObservations, setShowObservations] = useState(false)
   const itemRef = useRef(null)
 
@@ -29,12 +26,13 @@ function AgencyQuoteCard({ quote, onSave, onDelete, onAddObservation, addingObse
 
   function openEdit() {
     setPrice(quote.price ?? '')
+    setCurrency(quote.currency ?? 'USD')
     setMode('edit')
   }
 
   function handleSave(event) {
     event.preventDefault()
-    onSave(quote.id, price === '' ? null : Number(price))
+    onSave(quote.id, price === '' ? null : Number(price), currency)
     setMode('view')
   }
 
@@ -47,14 +45,20 @@ function AgencyQuoteCard({ quote, onSave, onDelete, onAddObservation, addingObse
     return (
       <li className="guest-item" ref={itemRef}>
         <form className="guest-edit-form" onSubmit={handleSave}>
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Precio"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            autoFocus
-          />
+          <div className="guest-edit-row">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Precio"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              autoFocus
+            />
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <option value="USD">USD</option>
+              <option value="PESOS">Pesos</option>
+            </select>
+          </div>
           <div className="guest-edit-actions">
             <button type="submit" className="guest-action-btn save">
               Guardar
@@ -87,7 +91,7 @@ function AgencyQuoteCard({ quote, onSave, onDelete, onAddObservation, addingObse
     <>
       <li className="guest-item" ref={itemRef} onDoubleClick={() => setShowObservations(true)} {...longPressHandlers}>
         <div className="task-info">
-          <span className="idea-text agency-quote-price">{formatPrice(quote.price)}</span>
+          <span className="idea-text agency-quote-price">{formatPrice(quote.price, quote.currency)}</span>
           <span className="task-date">
             {quote.observations.length} {quote.observations.length === 1 ? 'observación' : 'observaciones'}
           </span>

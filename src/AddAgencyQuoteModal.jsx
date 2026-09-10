@@ -2,11 +2,12 @@ import { useState } from 'react'
 
 function AddAgencyQuoteModal({ onSave, onCancel, saving, error }) {
   const [price, setPrice] = useState('')
+  const [currency, setCurrency] = useState('USD')
   const [text, setText] = useState('')
 
   function handleSubmit(event) {
     event.preventDefault()
-    onSave({ price: price === '' ? null : Number(price), text: text.trim() })
+    onSave({ price: price === '' ? null : Number(price), currency, text: text.trim() })
   }
 
   return (
@@ -14,14 +15,20 @@ function AddAgencyQuoteModal({ onSave, onCancel, saving, error }) {
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <h2>Nueva cotización</h2>
         <form onSubmit={handleSubmit}>
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Precio"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            autoFocus
-          />
+          <div className="guest-edit-row">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Precio"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              autoFocus
+            />
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <option value="USD">USD</option>
+              <option value="PESOS">Pesos</option>
+            </select>
+          </div>
           <input
             type="text"
             placeholder="Descripción (opcional)"

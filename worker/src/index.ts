@@ -135,6 +135,7 @@ interface QuoteRow {
   audio_key: string | null;
   status: string;
   price: number | null;
+  currency: string;
   travel_agency_id: number | null;
   created_at: string;
 }
@@ -172,6 +173,7 @@ function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObser
     audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
     status: row.status,
     price: row.price,
+    currency: row.currency,
     travel_agency_id: row.travel_agency_id,
     observations: observations.map((o) => toObservationResponse(o, origin)),
     created_at: row.created_at,
@@ -211,6 +213,7 @@ interface PlaceRow {
   name: string;
   photo_key: string | null;
   video_key: string | null;
+  is_favorite: number;
   created_at: string;
 }
 
@@ -221,6 +224,7 @@ function toPlaceResponse(row: PlaceRow, origin: string) {
     name: row.name,
     photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
     video_url: row.video_key ? `${origin}/api/media/${row.video_key}` : null,
+    is_favorite: Boolean(row.is_favorite),
     created_at: row.created_at,
   };
 }
@@ -470,7 +474,11 @@ export default {
 
     const OBS_COLUMNS = 'id, quote_id, text, photo_key, audio_key, document_key, document_name, created_at';
     const QUOTE_COLUMNS =
-      'id, text, document_key, document_name, photo_key, audio_key, status, price, travel_agency_id, created_at';
+      'id, text, document_key, document_name, photo_key, audio_key, status, price, currency, travel_agency_id, created_at';
+
+    function parseCurrency(value: unknown): string {
+      return value === 'PESOS' ? 'PESOS' : 'USD';
+    }
 
     if (url.pathname === '/api/quotes' && request.method === 'GET') {
       const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
@@ -510,11 +518,12 @@ export default {
         audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'quotes/audio') : null;
       const priceRaw = formData.get('price');
       const price = typeof priceRaw === 'string' && priceRaw.trim() !== '' ? Number(priceRaw) : null;
+      const currency = parseCurrency(formData.get('currency'));
 
       const result = await env.DB.prepare(
-        `INSERT INTO quotes (text, document_key, document_name, photo_key, audio_key, price) VALUES (?, ?, ?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
+        `INSERT INTO quotes (text, document_key, document_name, photo_key, audio_key, price, currency) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
       )
-        .bind(text.trim(), documentKey, documentName, photoKey, audioKey, Number.isFinite(price) ? price : null)
+        .bind(text.trim(), documentKey, documentName, photoKey, audioKey, Number.isFinite(price) ? price : null, currency)
         .first<QuoteRow>();
       return json(toQuoteResponse(result!, url.origin, []), origin, 201);
     }
@@ -633,9 +642,12 @@ export default {
           : typeof record.price === 'string' && record.price.trim() !== ''
             ? Number(record.price)
             : null;
+      const currency = parseCurrency(record.currency);
 
-      const result = await env.DB.prepare(`UPDATE quotes SET text = ?, price = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`)
-        .bind(text, Number.isFinite(price) ? price : null, id)
+      const result = await env.DB.prepare(
+        `UPDATE quotes SET text = ?, price = ?, currency = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`
+      )
+        .bind(text, Number.isFinite(price) ? price : null, currency, id)
         .first<QuoteRow>();
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
 
@@ -728,11 +740,13 @@ export default {
       return json(toAgencyResponse(result!), origin, 201);
     }
 
+    const PLACE_COLUMNS = 'id, destination_id, name, photo_key, video_key, is_favorite, created_at';
+
     const destinationPlacesMatch = url.pathname.match(/^\/api\/destinations\/(\d+)\/places$/);
     if (destinationPlacesMatch && request.method === 'GET') {
       const destinationId = Number(destinationPlacesMatch[1]);
       const { results } = await env.DB.prepare(
-        'SELECT id, destination_id, name, photo_key, video_key, created_at FROM places_to_visit WHERE destination_id = ? ORDER BY created_at ASC, id ASC'
+        `SELECT ${PLACE_COLUMNS} FROM places_to_visit WHERE destination_id = ? ORDER BY created_at ASC, id ASC`
       )
         .bind(destinationId)
         .all<PlaceRow>();
@@ -755,7 +769,7 @@ export default {
         videoFile instanceof File && videoFile.size > 0 ? await uploadFile(env, videoFile, 'places/video') : null;
 
       const result = await env.DB.prepare(
-        'INSERT INTO places_to_visit (destination_id, name, photo_key, video_key) VALUES (?, ?, ?, ?) RETURNING id, destination_id, name, photo_key, video_key, created_at'
+        `INSERT INTO places_to_visit (destination_id, name, photo_key, video_key) VALUES (?, ?, ?, ?) RETURNING ${PLACE_COLUMNS}`
       )
         .bind(destinationId, name.trim(), photoKey, videoKey)
         .first<PlaceRow>();
@@ -825,6 +839,7 @@ export default {
       const price =
         typeof priceRaw === 'number' ? priceRaw : typeof priceRaw === 'string' && priceRaw.trim() !== '' ? Number(priceRaw) : null;
       const overrideText = typeof record.text === 'string' ? record.text.trim() : '';
+      const currency = parseCurrency(record.currency);
 
       const agency = await env.DB.prepare('SELECT id, destination_id, name, created_at FROM travel_agencies WHERE id = ?')
         .bind(agencyId)
@@ -834,9 +849,9 @@ export default {
       const text = overrideText || `Cotización - ${agency.name}`;
 
       const result = await env.DB.prepare(
-        `INSERT INTO quotes (text, price, travel_agency_id) VALUES (?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
+        `INSERT INTO quotes (text, price, currency, travel_agency_id) VALUES (?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
       )
-        .bind(text, Number.isFinite(price) ? price : null, agencyId)
+        .bind(text, Number.isFinite(price) ? price : null, currency, agencyId)
         .first<QuoteRow>();
       return json(toQuoteResponse(result!, url.origin, []), origin, 201);
     }
@@ -871,16 +886,15 @@ export default {
     if (placeIdMatch && request.method === 'PATCH') {
       const id = Number(placeIdMatch[1]);
       const body = await request.json().catch(() => null);
-      const name =
-        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
-          ? ((body as Record<string, unknown>).name as string).trim()
-          : '';
+      const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const name = typeof record.name === 'string' ? record.name.trim() : '';
       if (!name) return json({ error: 'Invalid place data' }, origin, 400);
+      const isFavorite = Boolean(record.is_favorite);
 
       const result = await env.DB.prepare(
-        'UPDATE places_to_visit SET name = ? WHERE id = ? RETURNING id, destination_id, name, photo_key, video_key, created_at'
+        `UPDATE places_to_visit SET name = ?, is_favorite = ? WHERE id = ? RETURNING ${PLACE_COLUMNS}`
       )
-        .bind(name, id)
+        .bind(name, isFavorite ? 1 : 0, id)
         .first<PlaceRow>();
       if (!result) return json({ error: 'Place not found' }, origin, 404);
       return json(toPlaceResponse(result, url.origin), origin);

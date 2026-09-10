@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
+import { HeartIcon } from './icons'
 
-function PlaceItem({ place, onSave, onDelete }) {
+function PlaceItem({ place, onSave, onDelete, onToggleFavorite }) {
   const [mode, setMode] = useState('view')
   const [name, setName] = useState(place.name)
   const [showDetail, setShowDetail] = useState(false)
@@ -37,9 +38,14 @@ function PlaceItem({ place, onSave, onDelete }) {
     setMode('view')
   }
 
+  function handleToggleFavorite(event) {
+    event.stopPropagation()
+    onToggleFavorite(place.id)
+  }
+
   if (mode === 'edit') {
     return (
-      <li className="guest-item place-item-expanded" ref={itemRef}>
+      <li className="guest-item" ref={itemRef}>
         <form className="guest-edit-form" onSubmit={handleSave}>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
           <div className="guest-edit-actions">
@@ -57,7 +63,7 @@ function PlaceItem({ place, onSave, onDelete }) {
 
   if (mode === 'actions') {
     return (
-      <li className="guest-item place-item-expanded" ref={itemRef}>
+      <li className="guest-item" ref={itemRef}>
         <div className="guest-actions-panel">
           <button type="button" className="guest-action-btn edit" onClick={openEdit}>
             Editar
@@ -73,19 +79,27 @@ function PlaceItem({ place, onSave, onDelete }) {
   return (
     <>
       <li
-        className="place-item"
+        className="guest-item place-row"
         ref={itemRef}
         onDoubleClick={() => setShowDetail(true)}
         {...longPressHandlers}
       >
         {place.photo_url ? (
-          <img src={place.photo_url} alt="" className="place-thumb" />
+          <img src={place.photo_url} alt="" className="place-row-thumb" />
         ) : place.video_url ? (
-          <video src={place.video_url} className="place-thumb" muted />
+          <video src={place.video_url} className="place-row-thumb" muted />
         ) : (
-          <div className="place-thumb place-thumb-empty" />
+          <div className="place-row-thumb place-thumb-empty" />
         )}
-        <span className="place-name">{place.name}</span>
+        <span className="idea-text place-row-name">{place.name}</span>
+        <button
+          type="button"
+          className={`place-favorite-btn${place.is_favorite ? ' favorite' : ''}`}
+          onClick={handleToggleFavorite}
+          aria-label={place.is_favorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+        >
+          <HeartIcon filled={place.is_favorite} />
+        </button>
       </li>
 
       {showDetail && (

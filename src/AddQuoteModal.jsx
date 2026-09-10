@@ -3,6 +3,8 @@ import { CameraIcon, MicIcon, DocumentIcon } from './icons'
 
 function AddQuoteModal({ onSave, onCancel, saving, error }) {
   const [text, setText] = useState('')
+  const [price, setPrice] = useState('')
+  const [currency, setCurrency] = useState('USD')
   const [documentFile, setDocumentFile] = useState(null)
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
@@ -93,7 +95,14 @@ function AddQuoteModal({ onSave, onCancel, saving, error }) {
   function handleSubmit(event) {
     event.preventDefault()
     if (!text.trim()) return
-    onSave({ text: text.trim(), document: documentFile, photo: photoFile, audio: audioBlob })
+    onSave({
+      text: text.trim(),
+      price: price.trim(),
+      currency,
+      document: documentFile,
+      photo: photoFile,
+      audio: audioBlob,
+    })
   }
 
   return (
@@ -109,6 +118,20 @@ function AddQuoteModal({ onSave, onCancel, saving, error }) {
             required
             autoFocus
           />
+
+          <div className="guest-edit-row">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Precio (opcional)"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+            <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+              <option value="USD">USD</option>
+              <option value="PESOS">Pesos</option>
+            </select>
+          </div>
 
           <div className="media-row">
             <button

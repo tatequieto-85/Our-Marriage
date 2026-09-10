@@ -110,17 +110,35 @@ function DestinationDetail({ destination, onSelectAgency }) {
   }
 
   async function savePlace(id, name) {
+    const current = places.find((p) => p.id === id)
     try {
       const res = await fetch(`${API_BASE}/api/places/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, is_favorite: current?.is_favorite ?? false }),
       })
       if (!res.ok) throw new Error('No se pudo actualizar')
       const updated = await res.json()
       setPlaces((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
     } catch {
       setError('No se pudo actualizar el lugar.')
+    }
+  }
+
+  async function togglePlaceFavorite(id) {
+    const current = places.find((p) => p.id === id)
+    if (!current) return
+    try {
+      const res = await fetch(`${API_BASE}/api/places/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: current.name, is_favorite: !current.is_favorite }),
+      })
+      if (!res.ok) throw new Error('No se pudo actualizar')
+      const updated = await res.json()
+      setPlaces((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+    } catch {
+      setError('No se pudo actualizar el favorito.')
     }
   }
 
@@ -193,7 +211,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
             {agencies.length === 0 ? (
               <p className="guests-empty">Sin agencias todavía.</p>
             ) : (
-              <ul className="guests-list">
+              <ul className="guests-list compact-list">
                 {agencies.map((agency) => (
                   <SimpleNameItem
                     key={agency.id}
@@ -215,9 +233,15 @@ function DestinationDetail({ destination, onSelectAgency }) {
             {places.length === 0 ? (
               <p className="guests-empty">Sin lugares todavía.</p>
             ) : (
-              <ul className="place-grid">
+              <ul className="guests-list compact-list">
                 {places.map((place) => (
-                  <PlaceItem key={place.id} place={place} onSave={savePlace} onDelete={removePlace} />
+                  <PlaceItem
+                    key={place.id}
+                    place={place}
+                    onSave={savePlace}
+                    onDelete={removePlace}
+                    onToggleFavorite={togglePlaceFavorite}
+                  />
                 ))}
               </ul>
             )}
@@ -231,7 +255,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
             {hotels.length === 0 ? (
               <p className="guests-empty">Sin hoteles todavía.</p>
             ) : (
-              <ul className="guests-list">
+              <ul className="guests-list compact-list">
                 {hotels.map((hotel) => (
                   <SimpleNameItem key={hotel.id} item={hotel} onSave={saveHotel} onDelete={removeHotel} />
                 ))}

@@ -312,6 +312,10 @@
   gap: 0.5rem;
 }
 
+.guests-list.compact-list {
+  margin-bottom: 0.5rem;
+}
+
 .fab-button {
   position: fixed;
   left: 50%;
@@ -928,50 +932,44 @@
   color: var(--gold-dark);
 }
 
-.place-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+.place-row {
+  gap: 0.6rem;
 }
 
-.place-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-  cursor: pointer;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-
-.place-item-expanded {
-  grid-column: 1 / -1;
-}
-
-.place-thumb {
-  width: 100%;
-  aspect-ratio: 1;
+.place-row-thumb {
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 8px;
   object-fit: cover;
   background: var(--cream);
-  display: block;
+  flex-shrink: 0;
 }
 
 .place-thumb-empty {
   border: 1px dashed var(--gold-light);
 }
 
-.place-name {
-  font-size: 0.75rem;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
+.place-row-name {
+  flex: 1;
+}
+
+.place-favorite-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  cursor: pointer;
+  color: var(--gold-light);
+}
+
+.place-favorite-btn svg {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+}
+
+.place-favorite-btn.favorite {
+  color: #e0435c;
 }
 
 .place-video-preview {

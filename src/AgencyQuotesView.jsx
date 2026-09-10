@@ -34,14 +34,14 @@ function AgencyQuotesView({ agency }) {
     }
   }
 
-  async function addQuote({ price, text }) {
+  async function addQuote({ price, currency, text }) {
     setAdding(true)
     setAddError(null)
     try {
       const res = await fetch(QUOTES_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price, text }),
+        body: JSON.stringify({ price, currency, text }),
       })
       if (!res.ok) throw new Error('No se pudo agregar')
       const quote = await res.json()
@@ -54,13 +54,13 @@ function AgencyQuotesView({ agency }) {
     }
   }
 
-  async function saveQuotePrice(id, price) {
+  async function saveQuotePrice(id, price, currency) {
     try {
       const quote = quotes.find((q) => q.id === id)
       const res = await fetch(`${ALL_QUOTES_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: quote.text, price }),
+        body: JSON.stringify({ text: quote.text, price, currency }),
       })
       if (!res.ok) throw new Error('No se pudo actualizar')
       const updated = await res.json()

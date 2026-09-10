@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CameraIcon, MicIcon, DocumentIcon } from './icons'
+import { formatPrice } from './currency'
 
 function formatDate(value) {
   const date = new Date(value.includes('T') ? value : `${value.replace(' ', 'T')}Z`)
@@ -111,6 +112,9 @@ function QuoteObservationsModal({ quote, onAddObservation, onClose, saving, erro
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <h2>Observaciones</h2>
         <p className="idea-detail-text">{quote.text}</p>
+        {(quote.price !== null && quote.price !== undefined) && (
+          <p className="task-detail-date">{formatPrice(quote.price, quote.currency)}</p>
+        )}
 
         {quote.photo_url && <img src={quote.photo_url} alt="" className="idea-detail-photo" />}
         {quote.audio_url && <audio src={quote.audio_url} controls className="idea-detail-audio" />}
