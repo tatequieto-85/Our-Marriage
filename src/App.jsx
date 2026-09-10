@@ -5,7 +5,6 @@ import Section from './Section'
 import Guests from './Guests'
 import Ideas from './Ideas'
 import Tasks from './Tasks'
-import Gallery from './Gallery'
 import Storage from './Storage'
 import PhotoCarousel from './PhotoCarousel'
 import ComingSoon from './ComingSoon'
@@ -16,9 +15,9 @@ const SECTION_TITLES = {
   guests: 'Invitados',
   ideas: 'Ideas',
   tasks: 'Tareas',
-  gallery: 'Galería',
+  'soon-3': 'Próximamente',
   'soon-4': 'Próximamente',
-  storage: 'Almacenamiento',
+  storage: 'Galería',
 }
 
 function App() {
@@ -44,8 +43,6 @@ function App() {
             <Ideas />
           ) : view === 'tasks' ? (
             <Tasks />
-          ) : view === 'gallery' ? (
-            <Gallery />
           ) : view === 'storage' ? (
             <Storage />
           ) : (

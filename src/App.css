@@ -547,13 +547,6 @@
   padding-top: 0.5rem;
 }
 
-.storage-card-note {
-  margin-top: 1rem;
-  text-align: center;
-  font-size: 0.8rem;
-  opacity: 0.6;
-}
-
 /* Panel de Editar/Borrar: solo visible al mantener presionado un invitado */
 .guest-actions-panel {
   display: flex;
@@ -773,6 +766,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
+  margin-bottom: 4.5rem;
 }
 
 .gallery-thumb {
