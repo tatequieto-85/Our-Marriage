@@ -977,3 +977,41 @@
   border-radius: 8px;
   margin-bottom: 1rem;
 }
+
+.login-screen {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--cream);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+}
+
+.login-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+}
+
+.login-subtitle {
+  margin: 0 0 1.5rem;
+  opacity: 0.7;
+}
+
+.login-google-btn {
+  min-height: 44px;
+}
+
+.login-status {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}

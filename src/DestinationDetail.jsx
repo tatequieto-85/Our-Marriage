@@ -3,7 +3,7 @@ import SimpleNameItem from './SimpleNameItem'
 import PlaceItem from './PlaceItem'
 import AddNameModal from './AddNameModal'
 import AddPlaceModal from './AddPlaceModal'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 function DestinationDetail({ destination, onSelectAgency }) {
   const [agencies, setAgencies] = useState([])
@@ -29,9 +29,9 @@ function DestinationDetail({ destination, onSelectAgency }) {
     setError(null)
     try {
       const [agenciesRes, placesRes, hotelsRes] = await Promise.all([
-        fetch(`${BASE_URL}/agencies`),
-        fetch(`${BASE_URL}/places`),
-        fetch(`${BASE_URL}/hotels`),
+        apiFetch(`${BASE_URL}/agencies`),
+        apiFetch(`${BASE_URL}/places`),
+        apiFetch(`${BASE_URL}/hotels`),
       ])
       setAgencies(await agenciesRes.json())
       setPlaces(await placesRes.json())
@@ -47,7 +47,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const res = await fetch(`${BASE_URL}/agencies`, {
+      const res = await apiFetch(`${BASE_URL}/agencies`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -65,7 +65,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
 
   async function saveAgency(id, name) {
     try {
-      const res = await fetch(`${API_BASE}/api/agencies/${id}`, {
+      const res = await apiFetch(`${API_BASE}/api/agencies/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -80,7 +80,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
 
   async function removeAgency(id) {
     try {
-      const res = await fetch(`${API_BASE}/api/agencies/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_BASE}/api/agencies/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setAgencies((prev) => prev.filter((a) => a.id !== id))
     } catch {
@@ -97,7 +97,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
       if (photo) formData.append('photo', photo)
       if (video) formData.append('video', video)
 
-      const res = await fetch(`${BASE_URL}/places`, { method: 'POST', body: formData })
+      const res = await apiFetch(`${BASE_URL}/places`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const place = await res.json()
       setPlaces((prev) => [...prev, place])
@@ -112,7 +112,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
   async function savePlace(id, name) {
     const current = places.find((p) => p.id === id)
     try {
-      const res = await fetch(`${API_BASE}/api/places/${id}`, {
+      const res = await apiFetch(`${API_BASE}/api/places/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, is_favorite: current?.is_favorite ?? false }),
@@ -129,7 +129,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
     const current = places.find((p) => p.id === id)
     if (!current) return
     try {
-      const res = await fetch(`${API_BASE}/api/places/${id}`, {
+      const res = await apiFetch(`${API_BASE}/api/places/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: current.name, is_favorite: !current.is_favorite }),
@@ -144,7 +144,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
 
   async function removePlace(id) {
     try {
-      const res = await fetch(`${API_BASE}/api/places/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_BASE}/api/places/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setPlaces((prev) => prev.filter((p) => p.id !== id))
     } catch {
@@ -156,7 +156,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const res = await fetch(`${BASE_URL}/hotels`, {
+      const res = await apiFetch(`${BASE_URL}/hotels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -174,7 +174,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
 
   async function saveHotel(id, name) {
     try {
-      const res = await fetch(`${API_BASE}/api/hotels/${id}`, {
+      const res = await apiFetch(`${API_BASE}/api/hotels/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -189,7 +189,7 @@ function DestinationDetail({ destination, onSelectAgency }) {
 
   async function removeHotel(id) {
     try {
-      const res = await fetch(`${API_BASE}/api/hotels/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_BASE}/api/hotels/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setHotels((prev) => prev.filter((h) => h.id !== id))
     } catch {

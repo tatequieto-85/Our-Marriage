@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AgencyQuoteCard from './AgencyQuoteCard'
 import AddAgencyQuoteModal from './AddAgencyQuoteModal'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 function AgencyQuotesView({ agency }) {
   const [quotes, setQuotes] = useState([])
@@ -24,7 +24,7 @@ function AgencyQuotesView({ agency }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(QUOTES_URL)
+      const res = await apiFetch(QUOTES_URL)
       if (!res.ok) throw new Error('No se pudo cargar')
       setQuotes(await res.json())
     } catch {
@@ -38,7 +38,7 @@ function AgencyQuotesView({ agency }) {
     setAdding(true)
     setAddError(null)
     try {
-      const res = await fetch(QUOTES_URL, {
+      const res = await apiFetch(QUOTES_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ price, currency, text }),
@@ -57,7 +57,7 @@ function AgencyQuotesView({ agency }) {
   async function saveQuotePrice(id, price, currency) {
     try {
       const quote = quotes.find((q) => q.id === id)
-      const res = await fetch(`${ALL_QUOTES_URL}/${id}`, {
+      const res = await apiFetch(`${ALL_QUOTES_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: quote.text, price, currency }),
@@ -72,7 +72,7 @@ function AgencyQuotesView({ agency }) {
 
   async function removeQuote(id) {
     try {
-      const res = await fetch(`${ALL_QUOTES_URL}/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${ALL_QUOTES_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setQuotes((prev) => prev.filter((q) => q.id !== id))
     } catch {
@@ -90,7 +90,7 @@ function AgencyQuotesView({ agency }) {
       if (audio) formData.append('audio', audio, 'audio.webm')
       if (document) formData.append('document', document)
 
-      const res = await fetch(`${ALL_QUOTES_URL}/${id}/observations`, { method: 'POST', body: formData })
+      const res = await apiFetch(`${ALL_QUOTES_URL}/${id}/observations`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const updated = await res.json()
       setQuotes((prev) => prev.map((q) => (q.id === updated.id ? updated : q)))

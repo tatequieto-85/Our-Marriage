@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import QuoteItem from './QuoteItem'
 import AddQuoteModal from './AddQuoteModal'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const API_URL = `${API_BASE}/api/quotes`
 
@@ -24,7 +24,7 @@ function Quotes() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(API_URL)
+      const res = await apiFetch(API_URL)
       if (!res.ok) throw new Error('No se pudo cargar la lista')
       setQuotes(await res.json())
     } catch {
@@ -46,7 +46,7 @@ function Quotes() {
       if (photo) formData.append('photo', photo)
       if (audio) formData.append('audio', audio, 'audio.webm')
 
-      const res = await fetch(API_URL, { method: 'POST', body: formData })
+      const res = await apiFetch(API_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const quote = await res.json()
       setQuotes((prev) => [...prev, quote])
@@ -60,7 +60,7 @@ function Quotes() {
 
   async function saveQuote(id, { text, price, currency }) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await apiFetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, price, currency }),
@@ -75,7 +75,7 @@ function Quotes() {
 
   async function removeQuote(id) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setQuotes((prev) => prev.filter((q) => q.id !== id))
     } catch {
@@ -85,7 +85,7 @@ function Quotes() {
 
   async function dismissQuote(id) {
     try {
-      const res = await fetch(`${API_URL}/${id}/status`, {
+      const res = await apiFetch(`${API_URL}/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'desestimada' }),
@@ -101,7 +101,7 @@ function Quotes() {
   async function scheduleTask(id, dueDate, text, onDone) {
     setScheduling(true)
     try {
-      const res = await fetch(`${API_URL}/${id}/schedule-task`, {
+      const res = await apiFetch(`${API_URL}/${id}/schedule-task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ due_date: dueDate, text }),
@@ -125,7 +125,7 @@ function Quotes() {
       if (audio) formData.append('audio', audio, 'audio.webm')
       if (document) formData.append('document', document)
 
-      const res = await fetch(`${API_URL}/${id}/observations`, { method: 'POST', body: formData })
+      const res = await apiFetch(`${API_URL}/${id}/observations`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const updated = await res.json()
       setQuotes((prev) => prev.map((q) => (q.id === updated.id ? updated : q)))

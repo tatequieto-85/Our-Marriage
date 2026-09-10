@@ -19,5 +19,8 @@
       "binding": "MEDIA",
       "bucket_name": "nuestra-boda-media"
     }
-  ]
+  ],
+  "vars": {
+    "GOOGLE_CLIENT_ID": "238269964490-0j25880mvbdnfmpte1u65jdnf3cc4l3h.apps.googleusercontent.com"
+  }
 }

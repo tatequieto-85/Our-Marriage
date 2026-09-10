@@ -3,7 +3,7 @@ import DestinationItem from './DestinationItem'
 import AddDestinationModal from './AddDestinationModal'
 import DestinationDetail from './DestinationDetail'
 import AgencyQuotesView from './AgencyQuotesView'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const API_URL = `${API_BASE}/api/destinations`
 
@@ -35,7 +35,7 @@ function Honeymoon({ onHeaderChange }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(API_URL)
+      const res = await apiFetch(API_URL)
       if (!res.ok) throw new Error('No se pudo cargar la lista')
       setDestinations(await res.json())
     } catch {
@@ -53,7 +53,7 @@ function Honeymoon({ onHeaderChange }) {
       formData.append('name', name)
       if (photo) formData.append('photo', photo)
 
-      const res = await fetch(API_URL, { method: 'POST', body: formData })
+      const res = await apiFetch(API_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const destination = await res.json()
       setDestinations((prev) => [...prev, destination])
@@ -67,7 +67,7 @@ function Honeymoon({ onHeaderChange }) {
 
   async function saveDestination(id, name) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await apiFetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -82,7 +82,7 @@ function Honeymoon({ onHeaderChange }) {
 
   async function removeDestination(id) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setDestinations((prev) => prev.filter((d) => d.id !== id))
     } catch {

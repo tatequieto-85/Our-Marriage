@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { HeartIcon } from './icons'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const API_URL = `${API_BASE}/api/gallery`
 const ROTATE_MS = 6000
@@ -22,7 +22,7 @@ function PhotoCarousel() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(API_URL)
+    apiFetch(API_URL)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         if (!cancelled) setPhotos(shuffle(data))
@@ -67,7 +67,7 @@ function PhotoCarousel() {
     const nextFavorite = !photo.is_favorite
     setPhotos((prev) => prev.map((p) => (p.id === photo.id ? { ...p, is_favorite: nextFavorite } : p)))
     try {
-      await fetch(`${API_URL}/${photo.id}/favorite`, {
+      await apiFetch(`${API_URL}/${photo.id}/favorite`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_favorite: nextFavorite }),

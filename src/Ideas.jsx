@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import IdeaItem from './IdeaItem'
 import AddIdeaModal from './AddIdeaModal'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const API_URL = `${API_BASE}/api/ideas`
 
@@ -23,7 +23,7 @@ function Ideas() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(API_URL)
+      const res = await apiFetch(API_URL)
       if (!res.ok) throw new Error('No se pudo cargar la lista')
       setIdeas(await res.json())
     } catch {
@@ -43,7 +43,7 @@ function Ideas() {
       if (photo) formData.append('photo', photo)
       if (audio) formData.append('audio', audio, 'audio.webm')
 
-      const res = await fetch(API_URL, { method: 'POST', body: formData })
+      const res = await apiFetch(API_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const idea = await res.json()
       setIdeas((prev) => [...prev, idea])
@@ -57,7 +57,7 @@ function Ideas() {
 
   async function saveIdea(id, updates) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await apiFetch(`${API_URL}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -72,7 +72,7 @@ function Ideas() {
 
   async function removeIdea(id) {
     try {
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${API_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setIdeas((prev) => prev.filter((i) => i.id !== id))
     } catch {
@@ -84,7 +84,7 @@ function Ideas() {
     setConverting(true)
     setConvertError(null)
     try {
-      const res = await fetch(`${API_URL}/${id}/convert-to-task`, {
+      const res = await apiFetch(`${API_URL}/${id}/convert-to-task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ due_date: dueDate, text }),

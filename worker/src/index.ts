@@ -8,7 +8,7 @@ function corsHeaders(origin: string | null): HeadersInit {
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 }
 
@@ -17,6 +17,81 @@ function json(data: unknown, origin: string | null, status = 200): Response {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
   });
+}
+
+// --- Autenticación: solo estas cuentas de Google pueden usar la app ---
+const ALLOWED_EMAILS = new Set([
+  'gastropediatra.evacol@gmail.com',
+  'yeinyco@gmail.com',
+  'blanjor1685@gmail.com',
+  'byco85@gmail.com',
+  'royer.sanabria1685@gmail.com',
+]);
+
+const SESSION_DURATION_MS = 90 * 24 * 60 * 60 * 1000; // 90 días
+
+function base64UrlEncode(bytes: ArrayBuffer | Uint8Array): string {
+  const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  let binary = '';
+  for (const byte of arr) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecodeToString(value: string): string {
+  const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  return atob(padded);
+}
+
+async function hmacSign(data: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return base64UrlEncode(signature);
+}
+
+async function createSessionToken(email: string, secret: string): Promise<string> {
+  const payload = { email, exp: Date.now() + SESSION_DURATION_MS };
+  const payloadEncoded = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const signature = await hmacSign(payloadEncoded, secret);
+  return `${payloadEncoded}.${signature}`;
+}
+
+async function verifySessionToken(token: string, secret: string): Promise<string | null> {
+  const [payloadEncoded, signature] = token.split('.');
+  if (!payloadEncoded || !signature) return null;
+  const expectedSignature = await hmacSign(payloadEncoded, secret);
+  if (expectedSignature !== signature) return null;
+  try {
+    const payload = JSON.parse(base64UrlDecodeToString(payloadEncoded)) as { email: string; exp: number };
+    if (typeof payload.email !== 'string' || typeof payload.exp !== 'number') return null;
+    if (Date.now() > payload.exp) return null;
+    if (!ALLOWED_EMAILS.has(payload.email)) return null;
+    return payload.email;
+  } catch {
+    return null;
+  }
+}
+
+async function verifyGoogleIdToken(idToken: string, clientId: string): Promise<string | null> {
+  const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`);
+  if (!res.ok) return null;
+  const data = (await res.json()) as Record<string, unknown>;
+  if (data.aud !== clientId) return null;
+  if (data.email_verified !== 'true' && data.email_verified !== true) return null;
+  if (typeof data.email !== 'string') return null;
+  return data.email;
+}
+
+async function getAuthenticatedEmail(request: Request, env: Env): Promise<string | null> {
+  const header = request.headers.get('Authorization');
+  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) return null;
+  return verifySessionToken(token, env.SESSION_SECRET);
 }
 
 interface GuestInput {
@@ -257,6 +332,31 @@ export default {
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders(origin) });
+    }
+
+    if (url.pathname === '/api/auth/google' && request.method === 'POST') {
+      const body = await request.json().catch(() => null);
+      const idToken =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).credential === 'string'
+          ? ((body as Record<string, unknown>).credential as string)
+          : '';
+      if (!idToken) return json({ error: 'Invalid credential' }, origin, 400);
+
+      const email = await verifyGoogleIdToken(idToken, env.GOOGLE_CLIENT_ID);
+      if (!email || !ALLOWED_EMAILS.has(email)) {
+        return json({ error: 'No autorizado' }, origin, 403);
+      }
+
+      const token = await createSessionToken(email, env.SESSION_SECRET);
+      return json({ token, email }, origin);
+    }
+
+    // Todo lo demás bajo /api/ requiere una sesión válida.
+    // /api/media/ queda exento: lo cargan <img>/<audio>/<video>, que no pueden
+    // mandar el header Authorization; sus URLs ya usan claves UUID no adivinables.
+    if (url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/media/')) {
+      const email = await getAuthenticatedEmail(request, env);
+      if (!email) return json({ error: 'Unauthorized' }, origin, 401);
     }
 
     if (url.pathname === '/api/guests' && request.method === 'GET') {

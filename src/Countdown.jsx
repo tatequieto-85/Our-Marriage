@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
 import WeddingDateModal from './WeddingDateModal'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const SETTINGS_URL = `${API_BASE}/api/settings/wedding-date`
 
@@ -31,7 +31,7 @@ function Countdown({ compact = false }) {
     let cancelled = false
     async function loadDate() {
       try {
-        const res = await fetch(SETTINGS_URL)
+        const res = await apiFetch(SETTINGS_URL)
         if (res.ok) {
           const { value } = await res.json()
           const date = new Date(value)
@@ -65,7 +65,7 @@ function Countdown({ compact = false }) {
     setSaving(true)
     setSaveError(null)
     try {
-      const res = await fetch(SETTINGS_URL, {
+      const res = await apiFetch(SETTINGS_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: date.toISOString() }),

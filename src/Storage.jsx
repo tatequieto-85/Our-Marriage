@@ -3,7 +3,7 @@ import StorageIndicator from './StorageIndicator'
 import StorageWarningModal from './StorageWarningModal'
 import GalleryThumb from './GalleryThumb'
 import { CameraIcon } from './icons'
-import { API_BASE } from './api'
+import { API_BASE, apiFetch } from './api'
 
 const GALLERY_URL = `${API_BASE}/api/gallery`
 const USAGE_URL = `${API_BASE}/api/storage-usage`
@@ -27,7 +27,7 @@ function Storage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(GALLERY_URL)
+      const res = await apiFetch(GALLERY_URL)
       if (!res.ok) throw new Error('No se pudo cargar la galería')
       setPhotos(await res.json())
     } catch {
@@ -39,7 +39,7 @@ function Storage() {
 
   async function loadUsage() {
     try {
-      const res = await fetch(USAGE_URL)
+      const res = await apiFetch(USAGE_URL)
       if (!res.ok) return
       const data = await res.json()
       setUsage(data)
@@ -59,7 +59,7 @@ function Storage() {
     try {
       const formData = new FormData()
       formData.append('photo', file)
-      const res = await fetch(GALLERY_URL, { method: 'POST', body: formData })
+      const res = await apiFetch(GALLERY_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo subir la foto')
       const photo = await res.json()
       setPhotos((prev) => [...prev, photo])
@@ -73,7 +73,7 @@ function Storage() {
 
   async function removePhoto(id) {
     try {
-      const res = await fetch(`${GALLERY_URL}/${id}`, { method: 'DELETE' })
+      const res = await apiFetch(`${GALLERY_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setPhotos((prev) => prev.filter((p) => p.id !== id))
       loadUsage()
