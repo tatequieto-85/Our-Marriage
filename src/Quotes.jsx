@@ -34,13 +34,15 @@ function Quotes() {
     }
   }
 
-  async function addQuote({ text, document }) {
+  async function addQuote({ text, document, photo, audio }) {
     setAdding(true)
     setAddError(null)
     try {
       const formData = new FormData()
       formData.append('text', text)
       if (document) formData.append('document', document)
+      if (photo) formData.append('photo', photo)
+      if (audio) formData.append('audio', audio, 'audio.webm')
 
       const res = await fetch(API_URL, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
@@ -94,13 +96,13 @@ function Quotes() {
     }
   }
 
-  async function scheduleTask(id, dueDate, onDone) {
+  async function scheduleTask(id, dueDate, text, onDone) {
     setScheduling(true)
     try {
       const res = await fetch(`${API_URL}/${id}/schedule-task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ due_date: dueDate }),
+        body: JSON.stringify({ due_date: dueDate, text }),
       })
       if (!res.ok) throw new Error('No se pudo programar')
       onDone()

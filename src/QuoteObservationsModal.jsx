@@ -112,6 +112,9 @@ function QuoteObservationsModal({ quote, onAddObservation, onClose, saving, erro
         <h2>Observaciones</h2>
         <p className="idea-detail-text">{quote.text}</p>
 
+        {quote.photo_url && <img src={quote.photo_url} alt="" className="idea-detail-photo" />}
+        {quote.audio_url && <audio src={quote.audio_url} controls className="idea-detail-audio" />}
+
         {quote.document_url && (
           <a href={quote.document_url} target="_blank" rel="noopener noreferrer" className="idea-detail-link">
             {quote.document_name || 'Ver documento'}

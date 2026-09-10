@@ -27,6 +27,7 @@ function TaskDetailModal({ task, onClose }) {
             <strong>Comentarios:</strong> {task.comment}
           </p>
         )}
+        {task.origin_label && <p className="task-detail-origin">Proviene de: {task.origin_label}</p>}
         <div className="guest-edit-actions">
           <button type="button" className="guest-action-btn cancel" onClick={onClose}>
             Cerrar

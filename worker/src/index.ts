@@ -91,6 +91,7 @@ interface TaskRow {
   audio_key: string | null;
   completed_at: string | null;
   comment: string | null;
+  origin_label: string | null;
   created_at: string;
 }
 
@@ -104,6 +105,7 @@ function toTaskResponse(row: TaskRow, origin: string) {
     audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
     completed_at: row.completed_at,
     comment: row.comment,
+    origin_label: row.origin_label,
     created_at: row.created_at,
   };
 }
@@ -129,6 +131,8 @@ interface QuoteRow {
   text: string;
   document_key: string | null;
   document_name: string | null;
+  photo_key: string | null;
+  audio_key: string | null;
   status: string;
   created_at: string;
 }
@@ -162,6 +166,8 @@ function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObser
     text: row.text,
     document_url: row.document_key ? `${origin}/api/media/${row.document_key}` : null,
     document_name: row.document_name,
+    photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
+    audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
     status: row.status,
     observations: observations.map((o) => toObservationResponse(o, origin)),
     created_at: row.created_at,
@@ -288,14 +294,15 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
+    const TASK_COLUMNS = 'id, text, due_date, url, photo_key, audio_key, completed_at, comment, origin_label, created_at';
+
     const ideaConvertMatch = url.pathname.match(/^\/api\/ideas\/(\d+)\/convert-to-task$/);
     if (ideaConvertMatch && request.method === 'POST') {
       const id = Number(ideaConvertMatch[1]);
       const body = await request.json().catch(() => null);
-      const dueDate =
-        body && typeof body === 'object' && typeof (body as Record<string, unknown>).due_date === 'string'
-          ? ((body as Record<string, unknown>).due_date as string).trim()
-          : '';
+      const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const dueDate = typeof record.due_date === 'string' ? record.due_date.trim() : '';
+      const overrideText = typeof record.text === 'string' ? record.text.trim() : '';
       if (!dueDate) return json({ error: 'Invalid due date' }, origin, 400);
 
       const idea = await env.DB.prepare('SELECT text, url, photo_key, audio_key FROM ideas WHERE id = ?')
@@ -303,10 +310,13 @@ export default {
         .first<{ text: string; url: string | null; photo_key: string | null; audio_key: string | null }>();
       if (!idea) return json({ error: 'Idea not found' }, origin, 404);
 
+      const finalText = overrideText || idea.text;
+      const originLabel = `Idea: ${idea.text}`;
+
       const task = await env.DB.prepare(
-        'INSERT INTO tasks (text, due_date, url, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+        `INSERT INTO tasks (text, due_date, url, photo_key, audio_key, origin_label) VALUES (?, ?, ?, ?, ?, ?) RETURNING ${TASK_COLUMNS}`
       )
-        .bind(idea.text, dueDate, idea.url, idea.photo_key, idea.audio_key)
+        .bind(finalText, dueDate, idea.url, idea.photo_key, idea.audio_key, originLabel)
         .first<TaskRow>();
 
       // La foto/audio pasan a pertenecer a la tarea, por eso no se borran de R2 aquí.
@@ -316,9 +326,7 @@ export default {
     }
 
     if (url.pathname === '/api/tasks' && request.method === 'GET') {
-      const { results } = await env.DB.prepare(
-        'SELECT id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at FROM tasks'
-      ).all<TaskRow>();
+      const { results } = await env.DB.prepare(`SELECT ${TASK_COLUMNS} FROM tasks`).all<TaskRow>();
       return json(results.map((row) => toTaskResponse(row, url.origin)), origin);
     }
 
@@ -345,7 +353,7 @@ export default {
         audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'tasks/audio') : null;
 
       const result = await env.DB.prepare(
-        'INSERT INTO tasks (text, due_date, url, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+        `INSERT INTO tasks (text, due_date, url, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING ${TASK_COLUMNS}`
       )
         .bind(text.trim(), dueDate.trim(), trimmedUrl, photoKey, audioKey)
         .first<TaskRow>();
@@ -362,7 +370,7 @@ export default {
           : '';
 
       const result = await env.DB.prepare(
-        "UPDATE tasks SET completed_at = datetime('now'), comment = ? WHERE id = ? RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at"
+        `UPDATE tasks SET completed_at = datetime('now'), comment = ? WHERE id = ? RETURNING ${TASK_COLUMNS}`
       )
         .bind(comment || null, id)
         .first<TaskRow>();
@@ -378,7 +386,7 @@ export default {
       if (!body) return json({ error: 'Invalid task data' }, origin, 400);
 
       const result = await env.DB.prepare(
-        'UPDATE tasks SET text = ?, due_date = ?, url = ? WHERE id = ? RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+        `UPDATE tasks SET text = ?, due_date = ?, url = ? WHERE id = ? RETURNING ${TASK_COLUMNS}`
       )
         .bind(body.text, body.due_date, body.url, id)
         .first<TaskRow>();
@@ -399,12 +407,11 @@ export default {
     }
 
     const OBS_COLUMNS = 'id, quote_id, text, photo_key, audio_key, document_key, document_name, created_at';
+    const QUOTE_COLUMNS = 'id, text, document_key, document_name, photo_key, audio_key, status, created_at';
 
     if (url.pathname === '/api/quotes' && request.method === 'GET') {
       const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
-        env.DB.prepare(
-          'SELECT id, text, document_key, document_name, status, created_at FROM quotes ORDER BY created_at ASC, id ASC'
-        ).all<QuoteRow>(),
+        env.DB.prepare(`SELECT ${QUOTE_COLUMNS} FROM quotes ORDER BY created_at ASC, id ASC`).all<QuoteRow>(),
         env.DB.prepare(`SELECT ${OBS_COLUMNS} FROM quote_observations ORDER BY created_at ASC, id ASC`).all<QuoteObservationRow>(),
       ]);
       const obsByQuote = new Map<number, QuoteObservationRow[]>();
@@ -429,14 +436,20 @@ export default {
       }
 
       const documentFile = formData.get('document');
+      const photoFile = formData.get('photo');
+      const audioFile = formData.get('audio');
       const documentKey =
         documentFile instanceof File && documentFile.size > 0 ? await uploadFile(env, documentFile, 'quotes') : null;
       const documentName = documentFile instanceof File && documentFile.size > 0 ? documentFile.name : null;
+      const photoKey =
+        photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'quotes/photo') : null;
+      const audioKey =
+        audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'quotes/audio') : null;
 
       const result = await env.DB.prepare(
-        'INSERT INTO quotes (text, document_key, document_name) VALUES (?, ?, ?) RETURNING id, text, document_key, document_name, status, created_at'
+        `INSERT INTO quotes (text, document_key, document_name, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
       )
-        .bind(text.trim(), documentKey, documentName)
+        .bind(text.trim(), documentKey, documentName, photoKey, audioKey)
         .first<QuoteRow>();
       return json(toQuoteResponse(result!, url.origin, []), origin, 201);
     }
@@ -453,9 +466,7 @@ export default {
         return json({ error: 'Invalid status' }, origin, 400);
       }
 
-      const result = await env.DB.prepare(
-        'UPDATE quotes SET status = ? WHERE id = ? RETURNING id, text, document_key, document_name, status, created_at'
-      )
+      const result = await env.DB.prepare(`UPDATE quotes SET status = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`)
         .bind(status, id)
         .first<QuoteRow>();
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
@@ -479,9 +490,7 @@ export default {
         return json({ error: 'Invalid observation' }, origin, 400);
       }
 
-      const quote = await env.DB.prepare(
-        'SELECT id, text, document_key, document_name, status, created_at FROM quotes WHERE id = ?'
-      )
+      const quote = await env.DB.prepare(`SELECT ${QUOTE_COLUMNS} FROM quotes WHERE id = ?`)
         .bind(id)
         .first<QuoteRow>();
       if (!quote) return json({ error: 'Quote not found' }, origin, 404);
@@ -517,21 +526,30 @@ export default {
     if (quoteScheduleMatch && request.method === 'POST') {
       const id = Number(quoteScheduleMatch[1]);
       const body = await request.json().catch(() => null);
-      const dueDate =
-        body && typeof body === 'object' && typeof (body as Record<string, unknown>).due_date === 'string'
-          ? ((body as Record<string, unknown>).due_date as string).trim()
-          : '';
+      const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const dueDate = typeof record.due_date === 'string' ? record.due_date.trim() : '';
+      const overrideText = typeof record.text === 'string' ? record.text.trim() : '';
       if (!dueDate) return json({ error: 'Invalid due date' }, origin, 400);
 
-      const quote = await env.DB.prepare('SELECT text FROM quotes WHERE id = ?')
+      const quote = await env.DB.prepare(`SELECT ${QUOTE_COLUMNS} FROM quotes WHERE id = ?`)
         .bind(id)
-        .first<{ text: string }>();
+        .first<QuoteRow>();
       if (!quote) return json({ error: 'Quote not found' }, origin, 404);
 
-      const task = await env.DB.prepare(
-        'INSERT INTO tasks (text, due_date) VALUES (?, ?) RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+      const lastObservation = await env.DB.prepare(
+        'SELECT text FROM quote_observations WHERE quote_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'
       )
-        .bind(quote.text, dueDate)
+        .bind(id)
+        .first<{ text: string }>();
+
+      const finalText = overrideText || lastObservation?.text || quote.text;
+      const taskUrl = quote.document_key ? `${url.origin}/api/media/${quote.document_key}` : null;
+      const originLabel = `Cotización: ${quote.text}`;
+
+      const task = await env.DB.prepare(
+        `INSERT INTO tasks (text, due_date, url, origin_label) VALUES (?, ?, ?, ?) RETURNING ${TASK_COLUMNS}`
+      )
+        .bind(finalText, dueDate, taskUrl, originLabel)
         .first<TaskRow>();
 
       return json(toTaskResponse(task!, url.origin), origin, 201);
@@ -547,9 +565,7 @@ export default {
           : '';
       if (!text) return json({ error: 'Invalid quote data' }, origin, 400);
 
-      const result = await env.DB.prepare(
-        'UPDATE quotes SET text = ? WHERE id = ? RETURNING id, text, document_key, document_name, status, created_at'
-      )
+      const result = await env.DB.prepare(`UPDATE quotes SET text = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`)
         .bind(text, id)
         .first<QuoteRow>();
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
@@ -564,10 +580,12 @@ export default {
 
     if (quoteIdMatch && request.method === 'DELETE') {
       const id = Number(quoteIdMatch[1]);
-      const existing = await env.DB.prepare('SELECT document_key FROM quotes WHERE id = ?')
+      const existing = await env.DB.prepare('SELECT document_key, photo_key, audio_key FROM quotes WHERE id = ?')
         .bind(id)
-        .first<{ document_key: string | null }>();
+        .first<{ document_key: string | null; photo_key: string | null; audio_key: string | null }>();
       if (existing?.document_key) await env.MEDIA.delete(existing.document_key);
+      if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
+      if (existing?.audio_key) await env.MEDIA.delete(existing.audio_key);
 
       const { results: obsToDelete } = await env.DB.prepare(
         'SELECT photo_key, audio_key, document_key FROM quote_observations WHERE quote_id = ?'

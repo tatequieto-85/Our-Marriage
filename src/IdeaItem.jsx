@@ -47,8 +47,8 @@ function IdeaItem({ idea, onSave, onDelete, onConvert, converting, convertError 
     setMode('view')
   }
 
-  function handleConfirmConvert(dueDate) {
-    onConvert(idea.id, dueDate, () => setShowConvert(false))
+  function handleConfirmConvert(dueDate, text) {
+    onConvert(idea.id, dueDate, text, () => setShowConvert(false))
   }
 
   if (mode === 'edit') {

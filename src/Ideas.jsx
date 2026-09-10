@@ -80,14 +80,14 @@ function Ideas() {
     }
   }
 
-  async function convertIdea(id, dueDate, onDone) {
+  async function convertIdea(id, dueDate, text, onDone) {
     setConverting(true)
     setConvertError(null)
     try {
       const res = await fetch(`${API_URL}/${id}/convert-to-task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ due_date: dueDate }),
+        body: JSON.stringify({ due_date: dueDate, text }),
       })
       if (!res.ok) throw new Error('No se pudo convertir')
       setIdeas((prev) => prev.filter((i) => i.id !== id))

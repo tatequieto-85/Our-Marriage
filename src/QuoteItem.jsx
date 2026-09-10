@@ -48,8 +48,8 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
     setMode('view')
   }
 
-  function handleSchedule(dueDate) {
-    onSchedule(quote.id, dueDate, () => setShowSchedule(false))
+  function handleSchedule(dueDate, text) {
+    onSchedule(quote.id, dueDate, text, () => setShowSchedule(false))
   }
 
   if (mode === 'edit') {
@@ -138,6 +138,7 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
           saving={scheduling}
           title="Programar tarea"
           message="Se creará una tarea de seguimiento para esta cotización. Elige la fecha."
+          textPlaceholder="Texto de la tarea (si lo dejas vacío, se usa el último comentario)"
           confirmLabel="Programar"
           savingLabel="Programando…"
         />
