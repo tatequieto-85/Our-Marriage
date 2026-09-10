@@ -228,6 +228,33 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
+    const ideaConvertMatch = url.pathname.match(/^\/api\/ideas\/(\d+)\/convert-to-task$/);
+    if (ideaConvertMatch && request.method === 'POST') {
+      const id = Number(ideaConvertMatch[1]);
+      const body = await request.json().catch(() => null);
+      const dueDate =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).due_date === 'string'
+          ? ((body as Record<string, unknown>).due_date as string).trim()
+          : '';
+      if (!dueDate) return json({ error: 'Invalid due date' }, origin, 400);
+
+      const idea = await env.DB.prepare('SELECT text, url, photo_key, audio_key FROM ideas WHERE id = ?')
+        .bind(id)
+        .first<{ text: string; url: string | null; photo_key: string | null; audio_key: string | null }>();
+      if (!idea) return json({ error: 'Idea not found' }, origin, 404);
+
+      const task = await env.DB.prepare(
+        'INSERT INTO tasks (text, due_date, url, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at'
+      )
+        .bind(idea.text, dueDate, idea.url, idea.photo_key, idea.audio_key)
+        .first<TaskRow>();
+
+      // La foto/audio pasan a pertenecer a la tarea, por eso no se borran de R2 aquí.
+      await env.DB.prepare('DELETE FROM ideas WHERE id = ?').bind(id).run();
+
+      return json(toTaskResponse(task!, url.origin), origin, 201);
+    }
+
     if (url.pathname === '/api/tasks' && request.method === 'GET') {
       const { results } = await env.DB.prepare(
         'SELECT id, text, due_date, url, photo_key, audio_key, completed_at, comment, created_at FROM tasks'

@@ -12,6 +12,8 @@ function Ideas() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
+  const [converting, setConverting] = useState(false)
+  const [convertError, setConvertError] = useState(null)
 
   useEffect(() => {
     loadIdeas()
@@ -78,6 +80,25 @@ function Ideas() {
     }
   }
 
+  async function convertIdea(id, dueDate, onDone) {
+    setConverting(true)
+    setConvertError(null)
+    try {
+      const res = await fetch(`${API_URL}/${id}/convert-to-task`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ due_date: dueDate }),
+      })
+      if (!res.ok) throw new Error('No se pudo convertir')
+      setIdeas((prev) => prev.filter((i) => i.id !== id))
+      onDone()
+    } catch {
+      setConvertError('No se pudo convertir la idea en tarea. Intenta de nuevo.')
+    } finally {
+      setConverting(false)
+    }
+  }
+
   return (
     <>
       {error && <p className="guests-error">{error}</p>}
@@ -89,7 +110,15 @@ function Ideas() {
       ) : (
         <ul className="guests-list">
           {ideas.map((idea) => (
-            <IdeaItem key={idea.id} idea={idea} onSave={saveIdea} onDelete={removeIdea} />
+            <IdeaItem
+              key={idea.id}
+              idea={idea}
+              onSave={saveIdea}
+              onDelete={removeIdea}
+              onConvert={convertIdea}
+              converting={converting}
+              convertError={convertError}
+            />
           ))}
         </ul>
       )}

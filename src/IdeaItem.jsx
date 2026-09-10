@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLongPress } from './hooks/useLongPress'
+import { useSwipe } from './hooks/useSwipe'
 import IdeaDetailModal from './IdeaDetailModal'
+import ConvertToTaskModal from './ConvertToTaskModal'
 
 // mode: 'view' (normal) | 'actions' (mantener presionado) | 'edit' (botón Editar)
-function IdeaItem({ idea, onSave, onDelete }) {
+function IdeaItem({ idea, onSave, onDelete, onConvert, converting, convertError }) {
   const [mode, setMode] = useState('view')
   const [text, setText] = useState(idea.text)
   const [url, setUrl] = useState(idea.url ?? '')
   const [showDetail, setShowDetail] = useState(false)
+  const [showConvert, setShowConvert] = useState(false)
   const itemRef = useRef(null)
 
   const longPressHandlers = useLongPress(() => setMode('actions'))
+  const { handlers: swipeHandlers, dragX, dragging } = useSwipe({
+    onSwipeRight: () => setShowConvert(true),
+  })
 
   useEffect(() => {
     if (mode !== 'actions') return
@@ -39,6 +45,10 @@ function IdeaItem({ idea, onSave, onDelete }) {
   function handleDelete() {
     onDelete(idea.id)
     setMode('view')
+  }
+
+  function handleConfirmConvert(dueDate) {
+    onConvert(idea.id, dueDate, () => setShowConvert(false))
   }
 
   if (mode === 'edit') {
@@ -88,16 +98,37 @@ function IdeaItem({ idea, onSave, onDelete }) {
 
   return (
     <>
-      <li
-        className="guest-item"
-        ref={itemRef}
-        onDoubleClick={() => setShowDetail(true)}
-        {...longPressHandlers}
-      >
-        <span className="idea-text">{idea.text}</span>
+      <li className="task-item-wrapper">
+        {dragX > 0 && (
+          <div className="task-swipe-bg complete">
+            <span>Convertir en tarea</span>
+          </div>
+        )}
+        <div
+          className="guest-item task-item"
+          ref={itemRef}
+          onDoubleClick={() => setShowDetail(true)}
+          style={{
+            transform: `translateX(${dragX}px)`,
+            transition: dragging ? 'none' : 'transform 0.25s ease',
+          }}
+          {...swipeHandlers}
+          {...longPressHandlers}
+        >
+          <span className="idea-text">{idea.text}</span>
+        </div>
       </li>
 
       {showDetail && <IdeaDetailModal idea={idea} onClose={() => setShowDetail(false)} />}
+
+      {showConvert && (
+        <ConvertToTaskModal
+          onConfirm={handleConfirmConvert}
+          onCancel={() => setShowConvert(false)}
+          saving={converting}
+          error={convertError}
+        />
+      )}
     </>
   )
 }
