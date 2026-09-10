@@ -111,15 +111,17 @@ function Quotes() {
     }
   }
 
-  async function addObservation(id, text) {
+  async function addObservation(id, { text, photo, audio, document }) {
     setAddingObservation(true)
     setObservationError(null)
     try {
-      const res = await fetch(`${API_URL}/${id}/observations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      })
+      const formData = new FormData()
+      formData.append('text', text)
+      if (photo) formData.append('photo', photo)
+      if (audio) formData.append('audio', audio, 'audio.webm')
+      if (document) formData.append('document', document)
+
+      const res = await fetch(`${API_URL}/${id}/observations`, { method: 'POST', body: formData })
       if (!res.ok) throw new Error('No se pudo agregar')
       const updated = await res.json()
       setQuotes((prev) => prev.map((q) => (q.id === updated.id ? updated : q)))

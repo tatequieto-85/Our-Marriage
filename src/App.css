@@ -834,3 +834,23 @@
   opacity: 0.55;
   margin-bottom: 0.15rem;
 }
+
+.quote-observation-photo {
+  display: block;
+  max-width: 100%;
+  max-height: 10rem;
+  border-radius: 8px;
+  margin-top: 0.4rem;
+}
+
+.quote-observation-audio {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.quote-observations-list .idea-detail-link {
+  display: block;
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+}

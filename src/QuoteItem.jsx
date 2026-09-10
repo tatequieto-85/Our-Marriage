@@ -124,7 +124,7 @@ function QuoteItem({ quote, onSave, onDelete, onDismiss, onSchedule, onAddObserv
       {showObservations && (
         <QuoteObservationsModal
           quote={quote}
-          onAddObservation={(text) => onAddObservation(quote.id, text)}
+          onAddObservation={(data) => onAddObservation(quote.id, data)}
           onClose={() => setShowObservations(false)}
           saving={addingObservation}
           error={observationError}

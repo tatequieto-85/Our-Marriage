@@ -137,7 +137,23 @@ interface QuoteObservationRow {
   id: number;
   quote_id: number;
   text: string;
+  photo_key: string | null;
+  audio_key: string | null;
+  document_key: string | null;
+  document_name: string | null;
   created_at: string;
+}
+
+function toObservationResponse(row: QuoteObservationRow, origin: string) {
+  return {
+    id: row.id,
+    text: row.text,
+    photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
+    audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
+    document_url: row.document_key ? `${origin}/api/media/${row.document_key}` : null,
+    document_name: row.document_name,
+    created_at: row.created_at,
+  };
 }
 
 function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObservationRow[]) {
@@ -147,7 +163,7 @@ function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObser
     document_url: row.document_key ? `${origin}/api/media/${row.document_key}` : null,
     document_name: row.document_name,
     status: row.status,
-    observations: observations.map((o) => ({ id: o.id, text: o.text, created_at: o.created_at })),
+    observations: observations.map((o) => toObservationResponse(o, origin)),
     created_at: row.created_at,
   };
 }
@@ -382,14 +398,14 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
+    const OBS_COLUMNS = 'id, quote_id, text, photo_key, audio_key, document_key, document_name, created_at';
+
     if (url.pathname === '/api/quotes' && request.method === 'GET') {
       const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
         env.DB.prepare(
           'SELECT id, text, document_key, document_name, status, created_at FROM quotes ORDER BY created_at ASC, id ASC'
         ).all<QuoteRow>(),
-        env.DB.prepare(
-          'SELECT id, quote_id, text, created_at FROM quote_observations ORDER BY created_at ASC, id ASC'
-        ).all<QuoteObservationRow>(),
+        env.DB.prepare(`SELECT ${OBS_COLUMNS} FROM quote_observations ORDER BY created_at ASC, id ASC`).all<QuoteObservationRow>(),
       ]);
       const obsByQuote = new Map<number, QuoteObservationRow[]>();
       for (const obs of obsRows) {
@@ -445,7 +461,7 @@ export default {
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
 
       const { results: obsRows } = await env.DB.prepare(
-        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+        `SELECT ${OBS_COLUMNS} FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC`
       )
         .bind(id)
         .all<QuoteObservationRow>();
@@ -455,12 +471,13 @@ export default {
     const quoteObservationsMatch = url.pathname.match(/^\/api\/quotes\/(\d+)\/observations$/);
     if (quoteObservationsMatch && request.method === 'POST') {
       const id = Number(quoteObservationsMatch[1]);
-      const body = await request.json().catch(() => null);
-      const text =
-        body && typeof body === 'object' && typeof (body as Record<string, unknown>).text === 'string'
-          ? ((body as Record<string, unknown>).text as string).trim()
-          : '';
-      if (!text) return json({ error: 'Invalid observation' }, origin, 400);
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+
+      const text = formData.get('text');
+      if (typeof text !== 'string' || text.trim() === '') {
+        return json({ error: 'Invalid observation' }, origin, 400);
+      }
 
       const quote = await env.DB.prepare(
         'SELECT id, text, document_key, document_name, status, created_at FROM quotes WHERE id = ?'
@@ -469,10 +486,27 @@ export default {
         .first<QuoteRow>();
       if (!quote) return json({ error: 'Quote not found' }, origin, 404);
 
-      await env.DB.prepare('INSERT INTO quote_observations (quote_id, text) VALUES (?, ?)').bind(id, text).run();
+      const photoFile = formData.get('photo');
+      const audioFile = formData.get('audio');
+      const documentFile = formData.get('document');
+      const photoKey =
+        photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'quotes/obs-photo') : null;
+      const audioKey =
+        audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'quotes/obs-audio') : null;
+      const documentKey =
+        documentFile instanceof File && documentFile.size > 0
+          ? await uploadFile(env, documentFile, 'quotes/obs-document')
+          : null;
+      const documentName = documentFile instanceof File && documentFile.size > 0 ? documentFile.name : null;
+
+      await env.DB.prepare(
+        'INSERT INTO quote_observations (quote_id, text, photo_key, audio_key, document_key, document_name) VALUES (?, ?, ?, ?, ?, ?)'
+      )
+        .bind(id, text.trim(), photoKey, audioKey, documentKey, documentName)
+        .run();
 
       const { results: obsRows } = await env.DB.prepare(
-        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+        `SELECT ${OBS_COLUMNS} FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC`
       )
         .bind(id)
         .all<QuoteObservationRow>();
@@ -521,7 +555,7 @@ export default {
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
 
       const { results: obsRows } = await env.DB.prepare(
-        'SELECT id, quote_id, text, created_at FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC'
+        `SELECT ${OBS_COLUMNS} FROM quote_observations WHERE quote_id = ? ORDER BY created_at ASC, id ASC`
       )
         .bind(id)
         .all<QuoteObservationRow>();
@@ -534,6 +568,18 @@ export default {
         .bind(id)
         .first<{ document_key: string | null }>();
       if (existing?.document_key) await env.MEDIA.delete(existing.document_key);
+
+      const { results: obsToDelete } = await env.DB.prepare(
+        'SELECT photo_key, audio_key, document_key FROM quote_observations WHERE quote_id = ?'
+      )
+        .bind(id)
+        .all<{ photo_key: string | null; audio_key: string | null; document_key: string | null }>();
+      for (const obs of obsToDelete) {
+        if (obs.photo_key) await env.MEDIA.delete(obs.photo_key);
+        if (obs.audio_key) await env.MEDIA.delete(obs.audio_key);
+        if (obs.document_key) await env.MEDIA.delete(obs.document_key);
+      }
+
       await env.DB.prepare('DELETE FROM quote_observations WHERE quote_id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM quotes WHERE id = ?').bind(id).run();
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
