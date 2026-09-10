@@ -134,6 +134,8 @@ interface QuoteRow {
   photo_key: string | null;
   audio_key: string | null;
   status: string;
+  price: number | null;
+  travel_agency_id: number | null;
   created_at: string;
 }
 
@@ -169,9 +171,69 @@ function toQuoteResponse(row: QuoteRow, origin: string, observations: QuoteObser
     photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
     audio_url: row.audio_key ? `${origin}/api/media/${row.audio_key}` : null,
     status: row.status,
+    price: row.price,
+    travel_agency_id: row.travel_agency_id,
     observations: observations.map((o) => toObservationResponse(o, origin)),
     created_at: row.created_at,
   };
+}
+
+interface DestinationRow {
+  id: number;
+  name: string;
+  photo_key: string | null;
+  created_at: string;
+}
+
+function toDestinationResponse(row: DestinationRow, origin: string) {
+  return {
+    id: row.id,
+    name: row.name,
+    photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
+    created_at: row.created_at,
+  };
+}
+
+interface AgencyRow {
+  id: number;
+  destination_id: number;
+  name: string;
+  created_at: string;
+}
+
+function toAgencyResponse(row: AgencyRow) {
+  return { id: row.id, destination_id: row.destination_id, name: row.name, created_at: row.created_at };
+}
+
+interface PlaceRow {
+  id: number;
+  destination_id: number;
+  name: string;
+  photo_key: string | null;
+  video_key: string | null;
+  created_at: string;
+}
+
+function toPlaceResponse(row: PlaceRow, origin: string) {
+  return {
+    id: row.id,
+    destination_id: row.destination_id,
+    name: row.name,
+    photo_url: row.photo_key ? `${origin}/api/media/${row.photo_key}` : null,
+    video_url: row.video_key ? `${origin}/api/media/${row.video_key}` : null,
+    created_at: row.created_at,
+  };
+}
+
+interface HotelRow {
+  id: number;
+  destination_id: number;
+  name: string;
+  created_at: string;
+}
+
+function toHotelResponse(row: HotelRow) {
+  return { id: row.id, destination_id: row.destination_id, name: row.name, created_at: row.created_at };
 }
 
 async function uploadFile(env: Env, file: File, prefix: string): Promise<string> {
@@ -407,7 +469,8 @@ export default {
     }
 
     const OBS_COLUMNS = 'id, quote_id, text, photo_key, audio_key, document_key, document_name, created_at';
-    const QUOTE_COLUMNS = 'id, text, document_key, document_name, photo_key, audio_key, status, created_at';
+    const QUOTE_COLUMNS =
+      'id, text, document_key, document_name, photo_key, audio_key, status, price, travel_agency_id, created_at';
 
     if (url.pathname === '/api/quotes' && request.method === 'GET') {
       const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
@@ -445,11 +508,13 @@ export default {
         photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'quotes/photo') : null;
       const audioKey =
         audioFile instanceof File && audioFile.size > 0 ? await uploadFile(env, audioFile, 'quotes/audio') : null;
+      const priceRaw = formData.get('price');
+      const price = typeof priceRaw === 'string' && priceRaw.trim() !== '' ? Number(priceRaw) : null;
 
       const result = await env.DB.prepare(
-        `INSERT INTO quotes (text, document_key, document_name, photo_key, audio_key) VALUES (?, ?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
+        `INSERT INTO quotes (text, document_key, document_name, photo_key, audio_key, price) VALUES (?, ?, ?, ?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
       )
-        .bind(text.trim(), documentKey, documentName, photoKey, audioKey)
+        .bind(text.trim(), documentKey, documentName, photoKey, audioKey, Number.isFinite(price) ? price : null)
         .first<QuoteRow>();
       return json(toQuoteResponse(result!, url.origin, []), origin, 201);
     }
@@ -559,14 +624,18 @@ export default {
     if (quoteIdMatch && request.method === 'PATCH') {
       const id = Number(quoteIdMatch[1]);
       const body = await request.json().catch(() => null);
-      const text =
-        body && typeof body === 'object' && typeof (body as Record<string, unknown>).text === 'string'
-          ? ((body as Record<string, unknown>).text as string).trim()
-          : '';
+      const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const text = typeof record.text === 'string' ? record.text.trim() : '';
       if (!text) return json({ error: 'Invalid quote data' }, origin, 400);
+      const price =
+        typeof record.price === 'number'
+          ? record.price
+          : typeof record.price === 'string' && record.price.trim() !== ''
+            ? Number(record.price)
+            : null;
 
-      const result = await env.DB.prepare(`UPDATE quotes SET text = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`)
-        .bind(text, id)
+      const result = await env.DB.prepare(`UPDATE quotes SET text = ?, price = ? WHERE id = ? RETURNING ${QUOTE_COLUMNS}`)
+        .bind(text, Number.isFinite(price) ? price : null, id)
         .first<QuoteRow>();
       if (!result) return json({ error: 'Quote not found' }, origin, 404);
 
@@ -600,6 +669,305 @@ export default {
 
       await env.DB.prepare('DELETE FROM quote_observations WHERE quote_id = ?').bind(id).run();
       await env.DB.prepare('DELETE FROM quotes WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    // --- Luna de miel: destinos, agencias de viaje, lugares a visitar, hoteles ---
+
+    if (url.pathname === '/api/destinations' && request.method === 'GET') {
+      const { results } = await env.DB.prepare(
+        'SELECT id, name, photo_key, created_at FROM destinations ORDER BY created_at ASC, id ASC'
+      ).all<DestinationRow>();
+      return json(results.map((row) => toDestinationResponse(row, url.origin)), origin);
+    }
+
+    if (url.pathname === '/api/destinations' && request.method === 'POST') {
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+      const name = formData.get('name');
+      if (typeof name !== 'string' || name.trim() === '') {
+        return json({ error: 'Invalid destination data' }, origin, 400);
+      }
+      const photoFile = formData.get('photo');
+      const photoKey =
+        photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'destinations') : null;
+
+      const result = await env.DB.prepare(
+        'INSERT INTO destinations (name, photo_key) VALUES (?, ?) RETURNING id, name, photo_key, created_at'
+      )
+        .bind(name.trim(), photoKey)
+        .first<DestinationRow>();
+      return json(toDestinationResponse(result!, url.origin), origin, 201);
+    }
+
+    const destinationAgenciesMatch = url.pathname.match(/^\/api\/destinations\/(\d+)\/agencies$/);
+    if (destinationAgenciesMatch && request.method === 'GET') {
+      const destinationId = Number(destinationAgenciesMatch[1]);
+      const { results } = await env.DB.prepare(
+        'SELECT id, destination_id, name, created_at FROM travel_agencies WHERE destination_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(destinationId)
+        .all<AgencyRow>();
+      return json(results.map((row) => toAgencyResponse(row)), origin);
+    }
+
+    if (destinationAgenciesMatch && request.method === 'POST') {
+      const destinationId = Number(destinationAgenciesMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid agency data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'INSERT INTO travel_agencies (destination_id, name) VALUES (?, ?) RETURNING id, destination_id, name, created_at'
+      )
+        .bind(destinationId, name)
+        .first<AgencyRow>();
+      return json(toAgencyResponse(result!), origin, 201);
+    }
+
+    const destinationPlacesMatch = url.pathname.match(/^\/api\/destinations\/(\d+)\/places$/);
+    if (destinationPlacesMatch && request.method === 'GET') {
+      const destinationId = Number(destinationPlacesMatch[1]);
+      const { results } = await env.DB.prepare(
+        'SELECT id, destination_id, name, photo_key, video_key, created_at FROM places_to_visit WHERE destination_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(destinationId)
+        .all<PlaceRow>();
+      return json(results.map((row) => toPlaceResponse(row, url.origin)), origin);
+    }
+
+    if (destinationPlacesMatch && request.method === 'POST') {
+      const destinationId = Number(destinationPlacesMatch[1]);
+      const formData = await request.formData().catch(() => null);
+      if (!formData) return json({ error: 'Invalid form data' }, origin, 400);
+      const name = formData.get('name');
+      if (typeof name !== 'string' || name.trim() === '') {
+        return json({ error: 'Invalid place data' }, origin, 400);
+      }
+      const photoFile = formData.get('photo');
+      const videoFile = formData.get('video');
+      const photoKey =
+        photoFile instanceof File && photoFile.size > 0 ? await uploadFile(env, photoFile, 'places/photo') : null;
+      const videoKey =
+        videoFile instanceof File && videoFile.size > 0 ? await uploadFile(env, videoFile, 'places/video') : null;
+
+      const result = await env.DB.prepare(
+        'INSERT INTO places_to_visit (destination_id, name, photo_key, video_key) VALUES (?, ?, ?, ?) RETURNING id, destination_id, name, photo_key, video_key, created_at'
+      )
+        .bind(destinationId, name.trim(), photoKey, videoKey)
+        .first<PlaceRow>();
+      return json(toPlaceResponse(result!, url.origin), origin, 201);
+    }
+
+    const destinationHotelsMatch = url.pathname.match(/^\/api\/destinations\/(\d+)\/hotels$/);
+    if (destinationHotelsMatch && request.method === 'GET') {
+      const destinationId = Number(destinationHotelsMatch[1]);
+      const { results } = await env.DB.prepare(
+        'SELECT id, destination_id, name, created_at FROM hotels WHERE destination_id = ? ORDER BY created_at ASC, id ASC'
+      )
+        .bind(destinationId)
+        .all<HotelRow>();
+      return json(results.map((row) => toHotelResponse(row)), origin);
+    }
+
+    if (destinationHotelsMatch && request.method === 'POST') {
+      const destinationId = Number(destinationHotelsMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid hotel data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'INSERT INTO hotels (destination_id, name) VALUES (?, ?) RETURNING id, destination_id, name, created_at'
+      )
+        .bind(destinationId, name)
+        .first<HotelRow>();
+      return json(toHotelResponse(result!), origin, 201);
+    }
+
+    const agencyQuotesMatch = url.pathname.match(/^\/api\/agencies\/(\d+)\/quotes$/);
+    if (agencyQuotesMatch && request.method === 'GET') {
+      const agencyId = Number(agencyQuotesMatch[1]);
+      const [{ results: quoteRows }, { results: obsRows }] = await Promise.all([
+        env.DB.prepare(
+          `SELECT ${QUOTE_COLUMNS} FROM quotes WHERE travel_agency_id = ? ORDER BY created_at ASC, id ASC`
+        )
+          .bind(agencyId)
+          .all<QuoteRow>(),
+        env.DB.prepare(
+          `SELECT ${OBS_COLUMNS} FROM quote_observations WHERE quote_id IN (SELECT id FROM quotes WHERE travel_agency_id = ?) ORDER BY created_at ASC, id ASC`
+        )
+          .bind(agencyId)
+          .all<QuoteObservationRow>(),
+      ]);
+      const obsByQuote = new Map<number, QuoteObservationRow[]>();
+      for (const obs of obsRows) {
+        const list = obsByQuote.get(obs.quote_id) ?? [];
+        list.push(obs);
+        obsByQuote.set(obs.quote_id, list);
+      }
+      return json(
+        quoteRows.map((row) => toQuoteResponse(row, url.origin, obsByQuote.get(row.id) ?? [])),
+        origin
+      );
+    }
+
+    if (agencyQuotesMatch && request.method === 'POST') {
+      const agencyId = Number(agencyQuotesMatch[1]);
+      const body = await request.json().catch(() => null);
+      const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+      const priceRaw = record.price;
+      const price =
+        typeof priceRaw === 'number' ? priceRaw : typeof priceRaw === 'string' && priceRaw.trim() !== '' ? Number(priceRaw) : null;
+      const overrideText = typeof record.text === 'string' ? record.text.trim() : '';
+
+      const agency = await env.DB.prepare('SELECT id, destination_id, name, created_at FROM travel_agencies WHERE id = ?')
+        .bind(agencyId)
+        .first<AgencyRow>();
+      if (!agency) return json({ error: 'Agency not found' }, origin, 404);
+
+      const text = overrideText || `Cotización - ${agency.name}`;
+
+      const result = await env.DB.prepare(
+        `INSERT INTO quotes (text, price, travel_agency_id) VALUES (?, ?, ?) RETURNING ${QUOTE_COLUMNS}`
+      )
+        .bind(text, Number.isFinite(price) ? price : null, agencyId)
+        .first<QuoteRow>();
+      return json(toQuoteResponse(result!, url.origin, []), origin, 201);
+    }
+
+    const agencyIdMatch = url.pathname.match(/^\/api\/agencies\/(\d+)$/);
+    if (agencyIdMatch && request.method === 'PATCH') {
+      const id = Number(agencyIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid agency data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE travel_agencies SET name = ? WHERE id = ? RETURNING id, destination_id, name, created_at'
+      )
+        .bind(name, id)
+        .first<AgencyRow>();
+      if (!result) return json({ error: 'Agency not found' }, origin, 404);
+      return json(toAgencyResponse(result), origin);
+    }
+
+    if (agencyIdMatch && request.method === 'DELETE') {
+      const id = Number(agencyIdMatch[1]);
+      await env.DB.prepare('UPDATE quotes SET travel_agency_id = NULL WHERE travel_agency_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM travel_agencies WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    const placeIdMatch = url.pathname.match(/^\/api\/places\/(\d+)$/);
+    if (placeIdMatch && request.method === 'PATCH') {
+      const id = Number(placeIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid place data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE places_to_visit SET name = ? WHERE id = ? RETURNING id, destination_id, name, photo_key, video_key, created_at'
+      )
+        .bind(name, id)
+        .first<PlaceRow>();
+      if (!result) return json({ error: 'Place not found' }, origin, 404);
+      return json(toPlaceResponse(result, url.origin), origin);
+    }
+
+    if (placeIdMatch && request.method === 'DELETE') {
+      const id = Number(placeIdMatch[1]);
+      const existing = await env.DB.prepare('SELECT photo_key, video_key FROM places_to_visit WHERE id = ?')
+        .bind(id)
+        .first<{ photo_key: string | null; video_key: string | null }>();
+      if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
+      if (existing?.video_key) await env.MEDIA.delete(existing.video_key);
+      await env.DB.prepare('DELETE FROM places_to_visit WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    const hotelIdMatch = url.pathname.match(/^\/api\/hotels\/(\d+)$/);
+    if (hotelIdMatch && request.method === 'PATCH') {
+      const id = Number(hotelIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid hotel data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE hotels SET name = ? WHERE id = ? RETURNING id, destination_id, name, created_at'
+      )
+        .bind(name, id)
+        .first<HotelRow>();
+      if (!result) return json({ error: 'Hotel not found' }, origin, 404);
+      return json(toHotelResponse(result), origin);
+    }
+
+    if (hotelIdMatch && request.method === 'DELETE') {
+      const id = Number(hotelIdMatch[1]);
+      await env.DB.prepare('DELETE FROM hotels WHERE id = ?').bind(id).run();
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    const destinationIdMatch = url.pathname.match(/^\/api\/destinations\/(\d+)$/);
+    if (destinationIdMatch && request.method === 'PATCH') {
+      const id = Number(destinationIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      const name =
+        body && typeof body === 'object' && typeof (body as Record<string, unknown>).name === 'string'
+          ? ((body as Record<string, unknown>).name as string).trim()
+          : '';
+      if (!name) return json({ error: 'Invalid destination data' }, origin, 400);
+
+      const result = await env.DB.prepare(
+        'UPDATE destinations SET name = ? WHERE id = ? RETURNING id, name, photo_key, created_at'
+      )
+        .bind(name, id)
+        .first<DestinationRow>();
+      if (!result) return json({ error: 'Destination not found' }, origin, 404);
+      return json(toDestinationResponse(result, url.origin), origin);
+    }
+
+    if (destinationIdMatch && request.method === 'DELETE') {
+      const id = Number(destinationIdMatch[1]);
+
+      const existing = await env.DB.prepare('SELECT photo_key FROM destinations WHERE id = ?')
+        .bind(id)
+        .first<{ photo_key: string | null }>();
+      if (existing?.photo_key) await env.MEDIA.delete(existing.photo_key);
+
+      const { results: placesToDelete } = await env.DB.prepare(
+        'SELECT photo_key, video_key FROM places_to_visit WHERE destination_id = ?'
+      )
+        .bind(id)
+        .all<{ photo_key: string | null; video_key: string | null }>();
+      for (const place of placesToDelete) {
+        if (place.photo_key) await env.MEDIA.delete(place.photo_key);
+        if (place.video_key) await env.MEDIA.delete(place.video_key);
+      }
+
+      await env.DB.prepare(
+        'UPDATE quotes SET travel_agency_id = NULL WHERE travel_agency_id IN (SELECT id FROM travel_agencies WHERE destination_id = ?)'
+      )
+        .bind(id)
+        .run();
+      await env.DB.prepare('DELETE FROM travel_agencies WHERE destination_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM places_to_visit WHERE destination_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM hotels WHERE destination_id = ?').bind(id).run();
+      await env.DB.prepare('DELETE FROM destinations WHERE id = ?').bind(id).run();
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 

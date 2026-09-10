@@ -6,9 +6,9 @@ import Guests from './Guests'
 import Ideas from './Ideas'
 import Tasks from './Tasks'
 import Quotes from './Quotes'
+import Honeymoon from './Honeymoon'
 import Storage from './Storage'
 import PhotoCarousel from './PhotoCarousel'
-import ComingSoon from './ComingSoon'
 import VersionBadge from './VersionBadge'
 import './App.css'
 
@@ -17,7 +17,7 @@ const SECTION_TITLES = {
   ideas: 'Ideas',
   tasks: 'Tareas',
   quotes: 'Cotizaciones',
-  'soon-4': 'Próximamente',
+  honeymoon: 'Luna de miel',
   storage: 'Galería',
 }
 
@@ -46,10 +46,10 @@ function App() {
             <Tasks />
           ) : view === 'quotes' ? (
             <Quotes />
-          ) : view === 'storage' ? (
-            <Storage />
+          ) : view === 'honeymoon' ? (
+            <Honeymoon />
           ) : (
-            <ComingSoon />
+            <Storage />
           )}
         </Section>
       )}

@@ -1,11 +1,11 @@
-import { GuestsIcon, IdeasIcon, TasksIcon, QuotesIcon, GalleryIcon, SparkleIcon } from './icons'
+import { GuestsIcon, IdeasIcon, TasksIcon, QuotesIcon, HoneymoonIcon, GalleryIcon } from './icons'
 
 const ITEMS = [
   { id: 'guests', label: 'Invitados', Icon: GuestsIcon },
   { id: 'ideas', label: 'Ideas', Icon: IdeasIcon },
   { id: 'tasks', label: 'Tareas', Icon: TasksIcon },
   { id: 'quotes', label: 'Cotizaciones', Icon: QuotesIcon },
-  { id: 'soon-4', label: 'Próximamente', Icon: SparkleIcon },
+  { id: 'honeymoon', label: 'Luna de miel', Icon: HoneymoonIcon },
   { id: 'storage', label: 'Galería', Icon: GalleryIcon },
 ]
 

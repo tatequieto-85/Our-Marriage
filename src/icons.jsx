@@ -85,6 +85,25 @@ export function DocumentIcon() {
   )
 }
 
+export function HoneymoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 16 12 4l10 12" />
+      <path d="M6 12v7a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-7" />
+      <path d="M10 20v-4h4v4" />
+    </svg>
+  )
+}
+
+export function VideoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="6" width="12" height="12" rx="2" />
+      <path d="m15 10 6-3v10l-6-3Z" />
+    </svg>
+  )
+}
+
 export function SparkleIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
