@@ -525,6 +525,17 @@
   text-align: center;
 }
 
+.storage-section {
+  padding-top: 0.5rem;
+}
+
+.storage-card-note {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
 /* Panel de Editar/Borrar: solo visible al mantener presionado un invitado */
 .guest-actions-panel {
   display: flex;

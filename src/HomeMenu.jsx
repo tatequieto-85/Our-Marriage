@@ -1,4 +1,4 @@
-import { GuestsIcon, IdeasIcon, SparkleIcon } from './icons'
+import { GuestsIcon, IdeasIcon, SparkleIcon, StorageIcon } from './icons'
 
 const ITEMS = [
   { id: 'guests', label: 'Invitados', Icon: GuestsIcon },
@@ -6,7 +6,7 @@ const ITEMS = [
   { id: 'soon-2', label: 'Próximamente', Icon: SparkleIcon },
   { id: 'soon-3', label: 'Próximamente', Icon: SparkleIcon },
   { id: 'soon-4', label: 'Próximamente', Icon: SparkleIcon },
-  { id: 'soon-5', label: 'Próximamente', Icon: SparkleIcon },
+  { id: 'storage', label: 'Almacenamiento', Icon: StorageIcon },
 ]
 
 function HomeMenu({ onSelect }) {

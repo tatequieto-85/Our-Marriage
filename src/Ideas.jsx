@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import IdeaItem from './IdeaItem'
 import AddIdeaModal from './AddIdeaModal'
-import StorageIndicator from './StorageIndicator'
 import { API_BASE } from './api'
 
 const API_URL = `${API_BASE}/api/ideas`
@@ -13,7 +12,6 @@ function Ideas() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
-  const [storageVersion, setStorageVersion] = useState(0)
 
   useEffect(() => {
     loadIdeas()
@@ -47,7 +45,6 @@ function Ideas() {
       const idea = await res.json()
       setIdeas((prev) => [...prev, idea])
       setShowAddModal(false)
-      setStorageVersion((v) => v + 1)
     } catch {
       setAddError('No se pudo agregar la idea. Intenta de nuevo.')
     } finally {
@@ -75,7 +72,6 @@ function Ideas() {
       const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('No se pudo eliminar')
       setIdeas((prev) => prev.filter((i) => i.id !== id))
-      setStorageVersion((v) => v + 1)
     } catch {
       setError('No se pudo eliminar la idea.')
     }
@@ -83,8 +79,6 @@ function Ideas() {
 
   return (
     <>
-      <StorageIndicator refreshKey={storageVersion} />
-
       {error && <p className="guests-error">{error}</p>}
 
       {loading ? (

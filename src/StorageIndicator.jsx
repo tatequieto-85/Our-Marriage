@@ -9,7 +9,7 @@ function formatBytes(bytes) {
   return `${(mb / 1024).toFixed(1)} GB`
 }
 
-function StorageIndicator({ refreshKey }) {
+function StorageIndicator() {
   const [usage, setUsage] = useState(null)
 
   useEffect(() => {
@@ -23,7 +23,7 @@ function StorageIndicator({ refreshKey }) {
     return () => {
       cancelled = true
     }
-  }, [refreshKey])
+  }, [])
 
   if (!usage) return null
 

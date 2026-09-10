@@ -4,6 +4,7 @@ import HomeMenu from './HomeMenu'
 import Section from './Section'
 import Guests from './Guests'
 import Ideas from './Ideas'
+import Storage from './Storage'
 import ComingSoon from './ComingSoon'
 import VersionBadge from './VersionBadge'
 import './App.css'
@@ -14,7 +15,7 @@ const SECTION_TITLES = {
   'soon-2': 'Próximamente',
   'soon-3': 'Próximamente',
   'soon-4': 'Próximamente',
-  'soon-5': 'Próximamente',
+  storage: 'Almacenamiento',
 }
 
 function App() {
@@ -31,7 +32,15 @@ function App() {
         <HomeMenu onSelect={setView} />
       ) : (
         <Section title={SECTION_TITLES[view]} onBack={() => setView('home')}>
-          {view === 'guests' ? <Guests /> : view === 'ideas' ? <Ideas /> : <ComingSoon />}
+          {view === 'guests' ? (
+            <Guests />
+          ) : view === 'ideas' ? (
+            <Ideas />
+          ) : view === 'storage' ? (
+            <Storage />
+          ) : (
+            <ComingSoon />
+          )}
         </Section>
       )}
     </div>
