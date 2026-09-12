@@ -13,7 +13,7 @@ function HomeMenu({ onSelect }) {
   return (
     <div className="home-menu">
       {ITEMS.map(({ id, label, Icon }) => (
-        <button key={id} type="button" className="menu-item" onClick={() => onSelect(id)}>
+        <button key={id} type="button" className="menu-item" onDoubleClick={() => onSelect(id)}>
           <span className="menu-icon">
             <Icon />
           </span>
