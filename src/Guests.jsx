@@ -12,6 +12,7 @@ function Guests() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     loadGuests()
@@ -76,17 +77,50 @@ function Guests() {
     }
   }
 
+  const summary = guests.reduce(
+    (acc, guest) => {
+      acc[guest.rsvp] = (acc[guest.rsvp] || 0) + (guest.guests_count || 1)
+      return acc
+    },
+    { yes: 0, no: 0, pending: 0 }
+  )
+
+  const normalizedSearch = search.trim().toLowerCase()
+  const filteredGuests = normalizedSearch
+    ? guests.filter((guest) => guest.name.toLowerCase().includes(normalizedSearch))
+    : guests
+
   return (
     <>
       {error && <p className="guests-error">{error}</p>}
+
+      <div className="guests-search-bar">
+        <input
+          type="text"
+          className="guests-search-input"
+          placeholder="Buscar invitado..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {!loading && guests.length > 0 && (
+        <div className="guests-summary">
+          <span className="guests-summary-item rsvp-yes">{summary.yes} asisten</span>
+          <span className="guests-summary-item rsvp-no">{summary.no} no asisten</span>
+          <span className="guests-summary-item rsvp-pending">{summary.pending} pendientes</span>
+        </div>
+      )}
 
       {loading ? (
         <p>Cargando...</p>
       ) : guests.length === 0 ? (
         <p className="guests-empty">Aún no hay invitados. ¡Agrega el primero!</p>
+      ) : filteredGuests.length === 0 ? (
+        <p className="guests-empty">No se encontraron invitados.</p>
       ) : (
         <ul className="guests-list">
-          {guests.map((guest) => (
+          {filteredGuests.map((guest) => (
             <GuestItem key={guest.id} guest={guest} onSave={saveGuest} onDelete={removeGuest} />
           ))}
         </ul>

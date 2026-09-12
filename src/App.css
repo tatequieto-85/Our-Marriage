@@ -8,6 +8,7 @@
   --text-muted: rgba(58, 50, 38, 0.6);
   --rsvp-yes: #6b8f5c;
   --rsvp-no: #a8583f;
+  --rsvp-pending: #b08d2e;
 }
 
 .app {
@@ -301,6 +302,52 @@
   text-align: center;
   opacity: 0.6;
   font-size: 0.95rem;
+}
+
+.guests-search-bar {
+  margin-bottom: 0.6rem;
+}
+
+.guests-search-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--gold-light);
+  border-radius: 999px;
+  font-size: 0.95rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  color: var(--text);
+  background: var(--white);
+}
+
+.guests-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.guests-summary-item {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--cream);
+  border: 1px solid currentColor;
+}
+
+.guests-summary-item.rsvp-yes {
+  color: var(--rsvp-yes);
+}
+
+.guests-summary-item.rsvp-no {
+  color: var(--rsvp-no);
+}
+
+.guests-summary-item.rsvp-pending {
+  color: var(--rsvp-pending);
 }
 
 .guests-list {
