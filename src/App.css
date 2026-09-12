@@ -336,6 +336,24 @@
   font-weight: 600;
   background: var(--cream);
   border: 1px solid currentColor;
+  cursor: pointer;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.guests-summary-item.active.rsvp-yes {
+  color: var(--white);
+  background: var(--rsvp-yes);
+}
+
+.guests-summary-item.active.rsvp-no {
+  color: var(--white);
+  background: var(--rsvp-no);
+}
+
+.guests-summary-item.active.rsvp-pending {
+  color: var(--white);
+  background: var(--rsvp-pending);
 }
 
 .guests-summary-item.rsvp-yes {

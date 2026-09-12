@@ -13,6 +13,7 @@ function Guests() {
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState(null)
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState(null)
 
   useEffect(() => {
     loadGuests()
@@ -85,10 +86,14 @@ function Guests() {
     { yes: 0, no: 0, pending: 0 }
   )
 
+  function toggleStatusFilter(status) {
+    setStatusFilter((prev) => (prev === status ? null : status))
+  }
+
   const normalizedSearch = search.trim().toLowerCase()
-  const filteredGuests = normalizedSearch
-    ? guests.filter((guest) => guest.name.toLowerCase().includes(normalizedSearch))
-    : guests
+  const filteredGuests = guests
+    .filter((guest) => !statusFilter || guest.rsvp === statusFilter)
+    .filter((guest) => !normalizedSearch || guest.name.toLowerCase().includes(normalizedSearch))
 
   return (
     <>
@@ -106,9 +111,24 @@ function Guests() {
 
       {!loading && guests.length > 0 && (
         <div className="guests-summary">
-          <span className="guests-summary-item rsvp-yes">{summary.yes} asisten</span>
-          <span className="guests-summary-item rsvp-no">{summary.no} no asisten</span>
-          <span className="guests-summary-item rsvp-pending">{summary.pending} pendientes</span>
+          <span
+            className={`guests-summary-item rsvp-yes${statusFilter === 'yes' ? ' active' : ''}`}
+            onDoubleClick={() => toggleStatusFilter('yes')}
+          >
+            {summary.yes} asisten
+          </span>
+          <span
+            className={`guests-summary-item rsvp-no${statusFilter === 'no' ? ' active' : ''}`}
+            onDoubleClick={() => toggleStatusFilter('no')}
+          >
+            {summary.no} no asisten
+          </span>
+          <span
+            className={`guests-summary-item rsvp-pending${statusFilter === 'pending' ? ' active' : ''}`}
+            onDoubleClick={() => toggleStatusFilter('pending')}
+          >
+            {summary.pending} pendientes
+          </span>
         </div>
       )}
 
